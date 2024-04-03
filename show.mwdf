@@ -1,0 +1,21 @@
+<var>
+    $my_font = "mono";
+    $my_font_2 = "sans serif";
+</var>
+<canvas>
+    <panel>
+
+    *property -> with unit(length: px, angle: deg, ...):
+        position: (20, 30);
+        size: (10, 10);
+
+    *content:
+        <label>
+        *property -> with font($my_font)
+            position: inherit(parent);
+            size: (10%, 10%);
+            text: `Hello $(font: $my_font_2) World!` + "yeah~";
+        </label>
+    
+    </panel>
+</canvas>

@@ -1,4 +1,11 @@
-use sdl2::{self, video::Window, Sdl, VideoSubsystem, event::Event, pixels::Color};
+mod interpreter;
+mod view;
+
+use sdl2::gfx::primitives::DrawRenderer;
+use sdl2::rect::Rect;
+use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl, VideoSubsystem};
+
+use interpreter::parser::Parser;
 
 fn main() -> Result<(), String> {
     let sdl_context: Sdl = sdl2::init()?;
@@ -6,11 +13,7 @@ fn main() -> Result<(), String> {
     let window: Window = video_system.window("test", 800, 600)
         .build().unwrap();
 
-    let mut canvas = window.into_canvas().build().unwrap();
-
-    canvas.set_draw_color(Color::RGB(0, 255, 255));
-    canvas.clear();
-    canvas.present();
+    let mut canvas: Canvas<Window> = window.into_canvas().build().unwrap();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
@@ -18,12 +21,18 @@ fn main() -> Result<(), String> {
             match event {
                 Event::Quit {..} => {
                     break 'running;
-                }
+                },
                 _ => {}
             }
         }
-        // The rest of the game loop goes here...
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.clear();
+        canvas.filled_circle(50, 50, 10, Color::RGB(255, 0, 0)).unwrap();
+        canvas.fill_rect(Rect::new(5, 1, 20, 10)).unwrap();
+        canvas.present();
     }
+
+    let mut parser: Parser = Parser::new();
 
     Ok(()) 
 }
