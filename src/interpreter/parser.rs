@@ -1,27 +1,10 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use crate::view::elements::Element;
-enum TokenParseState {
-    None,
-    Tag,
-}
+use crate::interpreter::structs::{ TokenParseState, TokenConvertState, InterpreterError };
 
-//so that i can compare it using ==
-#[derive(PartialEq)]
-enum TokenConvertState {
-    Var,
-    Canvas,
-    Property,
-}
-
-pub enum ParserError {
-    Syntax(u32),
-    NoClosingTag(u32),
-    MissingEntryTag(u32),
-    MultipleEntryTag(u32),
-    BrokenSection,
-    EmptyFile,
-}
+use super::structs::{CanvasInterpretState, Token};
 
 pub struct Parser {  }
 
@@ -40,7 +23,7 @@ impl Parser {
     }
 
     //this generates a vector of tokens
-    fn split_file(&mut self, path: &str) -> Result<Vec<String>, ParserError> {
+    pub fn to_token_list(&mut self, path: &str) -> Result<Vec<Token>, InterpreterError> {
 
         //read the file
         let mut data: Vec<u8> = vec![];
@@ -48,154 +31,215 @@ impl Parser {
         match self.read_file(path) {
             Ok(file_data) => data = file_data,
 
-            Err(e) => println!("Error {}", e),
+            Err( .. ) => {
+                return Err(InterpreterError::InvalidFile);
+            }
         }
 
         //initialize the state machine
-        let mut tokens: Vec<String> = Vec::new();
+        let mut tokens: Vec<Token> = Vec::new();
         let mut parse_state: TokenParseState = TokenParseState::None;
 
-        let mut index = 0;
+        //initialize
+        let mut index: u32 = 0;
+        let mut row: u32 = 0;
+        let mut col: u32 = 0;
+
+        //convert the read data to chars
+        let mut char_data: Vec<char>;
+        match String::from_utf8(data) {
+            Ok(result) => char_data = result.chars().collect(),
+            Err(..) => return Err(InterpreterError::DecodingError),
+        }
         //start parsing
-        for i in data.iter() {
-            let temp: char = char::from(*i);
+        for character in char_data.iter() {
             match parse_state {
                 //if none then proceed until see a "<"
                 TokenParseState::None => {
-                    match temp {
+                    match character {
                         //if < then it's a tag
                         '<' => {
                             parse_state = TokenParseState::Tag;
-                            tokens.push(String::from("<"));
+                            tokens.push(Token::new(String::from("<"), row, col));
                         },
                         
                         //if space or next line ignore it
-                        ' ' | '\n' => {},
+                        ' ' => {
+                            col += 1;
+                        },
+
+                        '\n' => {
+                            row += 1;
+                            col = 0;
+                        },
                         
                         //if otherwise it's an error
                         _ => {
-                            return Err(ParserError::Syntax(index));
+                            return Err(InterpreterError::IllegalTagStart(row, col));
                         },
-                    }
+                    };
                 },
                 //just getting tag tokens
                 TokenParseState::Tag => {
-                    match temp {
+                    match character {
                         //exit tag mode
                         '>' => {
-                            tokens.last_mut().unwrap().push_str(&format!("{}", temp));
+                            tokens.last_mut().unwrap().content.push_str(&format!("{}", character));
                             parse_state = TokenParseState::None;
                         }
 
                         //you can't have a tag in a tag
                         '<' => {
-                            return Err(ParserError::Syntax(index));
+                            return Err(InterpreterError::Syntax(row, col));
                         }
 
                         //or whaever just append the tag
                         _ => {
-                            tokens.last_mut().unwrap().push_str(&format!("{}", temp));
+                            tokens.last_mut().unwrap().content.push_str(&format!("{}", character));
                         }
-                    }
+                    };
                 },
-            }
-            index += 1;
-        }
+                TokenParseState::Var => {
 
-        for str in tokens.iter() {
-            print!("{}", str);
-        }
+                },
+                TokenParseState::Comment => {
+                    match character {
+                        '#' => {
+                            parse_state = TokenParseState::None;
+                        },
+
+                        _ => {},
+                    };
+                },
+            };
+
+            index += 1; 
+        };
+
+        for token in tokens.iter() {
+            print!("{}", token.content);
+        };
 
         Ok(tokens)
     }
 
-    pub fn parse_file(&mut self, path: &str) -> Result<Vec<Element>, ParserError>{
+    fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<&str, Vec<Token>>, InterpreterError> {
+        let mut stack: Vec<&Token> = vec![];
+        let result: HashMap<&str, Vec<Token>> = HashMap::new();
+        //push to the stack
+        //TODO incomplete
+        for i in tokens.iter() {
+            match i.content.as_str() {
+                //if it's the <var>, push to the stack
+                "<var>" => {
+                    //if the stack is not empty, it's appeared for more than 1 times, error
+                    if stack.len() != 0 {
+                        return Err(InterpreterError::MultipleEntryTag(i.row, i.col));
+                    }
+                    stack.push(i);
+                },
+                "</var>" => {
+                    if stack.len() != 1 {
+                        return Err(InterpreterError::NoClosingTag(i.row, i.col));
+                    }
+                    stack.pop();
+                    break;
+                },
+                _ => { }
+            }
+            *index += 1;
+        }
+
+        //if there is nothing else, it's an error
+        if *index as usize == tokens.len() - 1 {
+            return Err(InterpreterError::MissingEntryTag(tokens[*index as usize].row, tokens[*index as usize].col));
+        }
+
+        //proceed
+        *index += 1;
+
+        Ok(result)
+    }
+
+    //at this point i just pass the ownership, as they are no longer needed
+    fn parse_canvas(&mut self, tokens: &Vec<Token>, vars: &HashMap<&str, Vec<Token>>, index: &mut u32) -> Result<Vec<Element>, InterpreterError> {
+        //initialize the result vector
+        let mut result: Vec<Element> = vec![];
+        //initialize the state machine
+        let mut state: CanvasInterpretState = CanvasInterpretState::None;
+        //initialize the stack
+        let mut stack: Vec<&Token> = vec![];
+
+        while (*index as usize) < tokens.len() {
+            let token: &Token = &tokens[*index as usize];
+            match state {
+                CanvasInterpretState::None => {
+                    //if not starting with <canvas>
+                    if token.content.as_str() != "<canvas>" {
+                        return Err(InterpreterError::MissingEntryTag(token.row, token.col));
+                    }
+
+                    //it it, so push it to the stack and start interpreting this canvas
+                    state = CanvasInterpretState::Tag;
+                    stack.push(token);
+                    *index += 1;
+                },
+                CanvasInterpretState::Tag => {
+                    if token.content.as_str().chars().next().unwrap() == '$' {
+                        //TODO variables
+                        continue;
+                    }
+                },
+                CanvasInterpretState::Property => {
+
+                },
+            }
+        }
+        Ok(result)
+    }
+
+    pub fn parse_file(&mut self, path: &str) -> Result<Vec<Element>, InterpreterError>{
 
         //init the result vector
         let mut parsed_vector: Vec<Element> = vec![];
 
         //get the split tokens vector
-        let mut split_list: Vec<String> = vec![];
-        match self.split_file(path) {
+        let mut split_list: Vec<Token> = vec![];
+        match self.to_token_list(path) {
             Ok(result) => split_list = result,
             Err(e) => return Err(e),
         };
-
-        //initialize the stack
-        let mut stack: Vec<String> = vec![];
         
+        //initialize the variable hash table
+        let mut vars: HashMap<&str, Vec<Token>> = HashMap::new();
+        //initialize the parse state
         let mut parse_state: TokenConvertState;
 
         //check for empty and incomplete stuffs
         match split_list.first() {
-            Some(str) => {
+            Some(token) => {
                 //convert the string to a string slice
-                match str.as_str() {
+                match token.content.as_str() {
                     "<var>" => parse_state = TokenConvertState::Var,
                     "<canvas>" => parse_state = TokenConvertState::Canvas,
 
                     _ => {
-                        return  Err(ParserError::MissingEntryTag(0));
+                        return Err(InterpreterError::MissingEntryTag(token.row, token.col));
                     },
                 }
             },
             None => {
-                return Err(ParserError::EmptyFile)
+                return Err(InterpreterError::EmptyFile)
             },
         }
         
         let mut index: u32 = 0;
         if parse_state == TokenConvertState::Var {
-            //push to the stack
-            //TODO incomplete
-            for i in split_list.iter() {
-                match i.as_str() {
-                    //if it's the <var>, push to the stack
-                    "<var>" => {
-                        //if the stack is not empty, it's appeared for more than 1 times, error
-                        if stack.len() != 0 {
-                            return Err(ParserError::MultipleEntryTag(index));
-                        }
-                        stack.push(String::from("<var>"));
-                    },
-                    "</var>" => {
-                        stack.pop();
-                        break;
-                    },
-                    _ => { }
-                }
-                index += 1;
+            match self.parse_var(&split_list, &mut index) {
+                Ok(result) => vars = result,
+                Err(e) => return Err(e),
             }
-            //if the stack is not cleared, there is something wrong
-            if stack.len() != 0 {
-                return Err(ParserError::BrokenSection);
-            }
-            
-            //if the current index in the vector is not <canvas>, there is comething wrong
-            if stack[index as usize].as_str() != "<canvas>" {
-                return Err(ParserError::BrokenSection);
-            }
-        }
-
-        //deal with the canvas
-        parse_state = TokenConvertState::Canvas;
-        let slice: &[String] = &split_list[index as usize..split_list.len()];
-
-        for i in slice.iter() {
-            match parse_state {
-                //at this state it's processing tags
-                TokenConvertState::Canvas => {
-                    
-                },
-
-                TokenConvertState::Property => {
-
-                },
-
-                TokenConvertState::Var => {
-
-                },
-            }
+            parse_state = TokenConvertState::Canvas;
         }
 
         Ok(parsed_vector)

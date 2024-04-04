@@ -1,4 +1,30 @@
 <var>
+    # this is a comment #
+    # data types: #
+    $my_font: str = "mono";
+    $my_font_2: str = "sans serif";
+    
+    $template = { $a: str, $b: int } -> {
+        <label>
+        *property <- inherit(parent):
+            position: copy(parent) + (b, b);
+        </label>
+    };
 </var>
 <canvas>
+    <panel>
+
+    *property:
+        position: (20, 30);
+        size: (10, 10);
+
+    *tag:
+        <label>
+        *property <- inherit(parent):
+            position: inherit(parent);
+            size: (10%, 10%);
+            text: `Hello ${font: $my_font_2} World!` + "yeah~";
+        </label>
+    
+    </panel>
 </canvas>

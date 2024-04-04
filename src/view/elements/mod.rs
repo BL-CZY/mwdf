@@ -1,11 +1,6 @@
-use sdl2::pixels::Color;
-use sdl2::rect::Point;
+pub mod panel;
 
-pub struct Panel {
-    left_up: Point,
-    right_bottom: Point,
-    color: Color,    
-}
+use crate::view::elements::panel::Panel;
 
 pub enum Element {
     Panel(Panel),
