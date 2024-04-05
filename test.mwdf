@@ -1,13 +1,15 @@
 <var>
     # this is a comment #
     # data types: #
-    $my_font: str = "mono";
-    $my_font_2: str = "sans serif";
+    $my_font: @ft = "mono";
+    $my_font_2: @ft = "sans serif";
+    $content: @str = "yeah";
     
-    $template = { $a: str, $b: int } -> {
+    $template = { $a: @str, $b: @int } -> {
         <label>
-        *property <- inherit(parent):
-            position: copy(parent) + (b, b);
+        # this is a mark #
+        *property | @inherit(parent):
+            ^position: @copy(parent) + ($b, $b);
         </label>
     };
 </var>
@@ -15,15 +17,15 @@
     <panel>
 
     *property:
-        position: (20, 30);
-        size: (10, 10);
+        ^position: # this is a vector # (20, 30);
+        ^size: (10, 10);
 
     *tag:
         <label>
-        *property <- inherit(parent):
-            position: inherit(parent);
-            size: (10%, 10%);
-            text: `Hello ${font: $my_font_2} World!` + "yeah~";
+        *property | @inherit(parent):
+            ^position: @inherit(parent);
+            ^size: (10%, 10%);
+            ^text: "Hello" + $my_font + $content + "World!";
         </label>
     
     </panel>

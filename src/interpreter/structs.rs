@@ -2,6 +2,12 @@ pub enum TokenParseState {
     None,
     Tag,
     Var,
+    Str,
+    Builtin,
+    TwoCharToken,
+    Mark,
+    Property,
+    Vector,
     Comment,
 }
 
