@@ -1,15 +1,15 @@
 <var>
     # this is a comment #
     # data types: #
-    $my_font: @ft = "mono";
-    $my_font_2: @ft = "sans serif";
+    $my_font: @ft = `mono`;
+    $my_font_2: @ft = `sans serif`;
     $content: @str = "yeah";
     $varvec: @vec = (10, 20, 30);
     $integer: @vec = (10);
     $decimal: @vec = (1.23232);
     $percent: @vec = (30%);
     
-    $template = { $a: @str, $b: @int } -> {
+    $template: @exp = { $a: @str, $b: @int } -> {
         <label>
         # this is a mark #
         *property | @inherit(parent):

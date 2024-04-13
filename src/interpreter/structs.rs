@@ -20,6 +20,9 @@ pub enum TokenConvertState {
 
 pub enum VarHashState {
     None,
+    VarName,
+    VarType,
+    VarDef,
 }
 
 pub enum CanvasInterpretState {

@@ -1,6 +1,6 @@
 pub mod structs;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 use std::fs::File;
 use std::io::Read;
 use crate::view::elements::Element;
@@ -70,10 +70,10 @@ impl Interpreter {
                             tokens.push(Token::new(String::from(""), row, col));
                         },
 
-                        '\"' => {
+                        '\"' | '`' => {
                             parse_state = TokenParseState::Str;
                             //abt strings
-                            tokens.push(Token::new(String::from("\""), row, col));
+                            tokens.push(Token::new(String::from(*character), row, col));
                             tokens.push(Token::new(String::from(""), row, col));
                         },
 
@@ -167,9 +167,9 @@ impl Interpreter {
                 },
                 TokenParseState::Str => {
                     match character {
-                        '\"' => {
+                        '\"' | '`' => {
                             parse_state = TokenParseState::None;
-                            tokens.push(Token::new(String::from("\""), row, col));
+                            tokens.push(Token::new(String::from(*character), row, col));
                         },
 
                         _ => {
@@ -279,47 +279,62 @@ impl Interpreter {
      * this function takes a list of tokens and the current index and returns a hashmap of the variables
      * *by the end of the function the index would point to the start of the canvas section
      */
-    fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<&str, Vec<Token>>, InterpreterError> {
+    fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<Token>>, InterpreterError> {
         //initialize the stack
         let mut stack: Vec<&Token> = vec![];
         //initialize the hashmap
-        let mut result: HashMap<&str, Vec<Token>> = HashMap::new();
+        let mut result: HashMap<String, Vec<Token>> = HashMap::new();
         //initialize the has state
         let mut hash_state: VarHashState = VarHashState::None;
 
-        loop {
+        let mut current_var: String;
+        'hashing: loop {
             let token: &Token = &tokens[*index as usize];
+            if (token.content.as_str() == "</var>") || ((*index as usize) >= tokens.len()) {
+                break 'hashing;
+            }
             match hash_state {
                 VarHashState::None => {
                     match token.content.as_str() {
                         //at this point only accepts $
                         "$" => {
                             //take the name
-                            *index += 1;
-                            result.insert(&tokens[*index as usize].content, vec![]);
-                            //check for the next sign
-                            *index += 1;
-                            match tokens[*index as usize].content.as_str() {
-                                ":" => {},
-                                "=" => {},
-                                //unknown sign
-                                _ => {
-                                    return Err(InterpreterError::Syntax(tokens[*index as usize].row, tokens[*index as usize].col));
-                                },
-                            };
+                            hash_state = VarHashState::VarName;
                         },
                         _ => {
                             return Err(InterpreterError::Syntax(token.row, token.col));
                         },
                     }
                 },
+                VarHashState::VarName => {
+                    match token.content.as_str() {
+                        //type
+                        ":" => {
+                            hash_state = VarHashState::VarType;
+                        },
+
+                        //hash the name
+                        _ => {
+                            current_var = String::from(&token.content);
+                            result.insert(String::from(&token.content), vec![]);
+                        },
+                    };
+                },
+                VarHashState::VarType => {
+                    match token.content.as_str() {
+                        "@str" => {},
+                        "@ft" => {},
+                        "@vec" => {},
+                        "@exp" => {},
+                        
+                        _ => {
+                            return Err(InterpreterError::Syntax(token.row, token.col));
+                        },
+                    };
+                },
+                VarHashState::VarDef => {},
             };
-            //end of the var section
-            if token.content.as_str() == "</var>" {
-                break;
-            } else {
-                *index += 1;
-            }
+            *index += 1;
         }
 
         //proceed
@@ -356,7 +371,7 @@ impl Interpreter {
         };
         
         //initialize the variable hash table
-        let mut vars: HashMap<&str, Vec<Token>> = HashMap::new();
+        let mut vars: HashMap<String, Vec<Token>> = HashMap::new();
         //initialize the parse state
         let mut parse_state: TokenConvertState;
 
