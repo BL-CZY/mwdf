@@ -35,7 +35,7 @@ fn main() -> Result<(), String> {
 
     let mut interpreter: Interpreter = Interpreter::new();
 
-    match interpreter.to_token_list("/home/tpl/projects/mwdf/test.mwdf") {
+    match interpreter.to_token_list("/home/tpl/projects/mwdf/test.dvi") {
         Ok(..) => {},
         Err(e) => {
             match e {

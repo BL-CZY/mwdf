@@ -18,6 +18,10 @@ pub enum TokenConvertState {
     Canvas,
 }
 
+pub enum VarHashState {
+    None,
+}
+
 pub enum CanvasInterpretState {
     None,
     Tag,

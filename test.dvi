@@ -4,6 +4,10 @@
     $my_font: @ft = "mono";
     $my_font_2: @ft = "sans serif";
     $content: @str = "yeah";
+    $varvec: @vec = (10, 20, 30);
+    $integer: @vec = (10);
+    $decimal: @vec = (1.23232);
+    $percent: @vec = (30%);
     
     $template = { $a: @str, $b: @int } -> {
         <label>
@@ -25,7 +29,7 @@
         *property | @inherit(parent):
             ^position: @inherit(parent);
             ^size: (10%, 10%);
-            ^text: "Hello" + $my_font + $content + "World!";
+            ^text: "Hello" + $my_font + $content + "World!测试";
         </label>
     
     </panel>

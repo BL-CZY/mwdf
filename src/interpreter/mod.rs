@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use crate::view::elements::Element;
-use crate::interpreter::structs::{ TokenParseState, TokenConvertState, InterpreterError, CanvasInterpretState, Token };
+use self::structs::{ TokenParseState, TokenConvertState, InterpreterError, CanvasInterpretState, Token, VarHashState };
 
 pub struct Interpreter {  }
 
@@ -269,42 +269,57 @@ impl Interpreter {
         };
 
         for token in tokens.iter() {
-            print!("{}, ", token.content);
+            print!("{} ", token.content);
         };
 
         Ok(tokens)
     }
 
+    /**
+     * this function takes a list of tokens and the current index and returns a hashmap of the variables
+     * *by the end of the function the index would point to the start of the canvas section
+     */
     fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<&str, Vec<Token>>, InterpreterError> {
+        //initialize the stack
         let mut stack: Vec<&Token> = vec![];
-        let result: HashMap<&str, Vec<Token>> = HashMap::new();
-        //push to the stack
-        //TODO incomplete
-        for i in tokens.iter() {
-            match i.content.as_str() {
-                //if it's the <var>, push to the stack
-                "<var>" => {
-                    //if the stack is not empty, it's appeared for more than 1 times, error
-                    if stack.len() != 0 {
-                        return Err(InterpreterError::MultipleEntryTag(i.row, i.col));
-                    }
-                    stack.push(i);
-                },
-                "</var>" => {
-                    if stack.len() != 1 {
-                        return Err(InterpreterError::NoClosingTag(i.row, i.col));
-                    }
-                    stack.pop();
-                    break;
-                },
-                _ => { }
-            }
-            *index += 1;
-        }
+        //initialize the hashmap
+        let mut result: HashMap<&str, Vec<Token>> = HashMap::new();
+        //initialize the has state
+        let mut hash_state: VarHashState = VarHashState::None;
 
-        //if there is nothing else, it's an error
-        if *index as usize == tokens.len() - 1 {
-            return Err(InterpreterError::MissingEntryTag(tokens[*index as usize].row, tokens[*index as usize].col));
+        loop {
+            let token: &Token = &tokens[*index as usize];
+            match hash_state {
+                VarHashState::None => {
+                    match token.content.as_str() {
+                        //at this point only accepts $
+                        "$" => {
+                            //take the name
+                            *index += 1;
+                            result.insert(&tokens[*index as usize].content, vec![]);
+                            //check for the next sign
+                            *index += 1;
+                            match tokens[*index as usize].content.as_str() {
+                                ":" => {},
+                                "=" => {},
+                                //unknown sign
+                                _ => {
+                                    return Err(InterpreterError::Syntax(tokens[*index as usize].row, tokens[*index as usize].col));
+                                },
+                            };
+                        },
+                        _ => {
+                            return Err(InterpreterError::Syntax(token.row, token.col));
+                        },
+                    }
+                },
+            };
+            //end of the var section
+            if token.content.as_str() == "</var>" {
+                break;
+            } else {
+                *index += 1;
+            }
         }
 
         //proceed
@@ -324,28 +339,6 @@ impl Interpreter {
 
         while (*index as usize) < tokens.len() {
             let token: &Token = &tokens[*index as usize];
-            match state {
-                CanvasInterpretState::None => {
-                    //if not starting with <canvas>
-                    if token.content.as_str() != "<canvas>" {
-                        return Err(InterpreterError::MissingEntryTag(token.row, token.col));
-                    }
-
-                    //it it, so push it to the stack and start interpreting this canvas
-                    state = CanvasInterpretState::Tag;
-                    stack.push(token);
-                    *index += 1;
-                },
-                CanvasInterpretState::Tag => {
-                    if token.content.as_str().chars().next().unwrap() == '$' {
-                        //TODO variables
-                        continue;
-                    }
-                },
-                CanvasInterpretState::Property => {
-
-                },
-            }
         }
         Ok(result)
     }
