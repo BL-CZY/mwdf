@@ -26,7 +26,7 @@ impl Interpreter {
     pub fn to_token_list(&mut self, path: &str) -> Result<Vec<Token>, InterpreterError> {
 
         //read the file
-        let mut data: Vec<u8> = vec![];
+        let data: Vec<u8>;
         
         match self.read_file(path) {
             Ok(file_data) => data = file_data,
@@ -125,7 +125,7 @@ impl Interpreter {
                         
                         //if otherwise it's an error
                         _ => {
-                            return Err(InterpreterError::Syntax(row, col));
+                            return Err(InterpreterError::Syntax(row, col, String::from("unknown token start")));
                         },
                     };
                 },
@@ -140,7 +140,7 @@ impl Interpreter {
 
                         //you can't have a tag in a tag
                         '<' => {
-                            return Err(InterpreterError::Syntax(row, col));
+                            return Err(InterpreterError::Syntax(row, col, String::from("recursive tag declaration")));
                         }
 
                         //or whaever just append the tag
@@ -203,7 +203,7 @@ impl Interpreter {
                         },
 
                         _ => {
-                            return Err(InterpreterError::Syntax(row, col));
+                            return Err(InterpreterError::Syntax(row, col, String::from("unknown token end")));
                         },
                     };
                 },
@@ -287,7 +287,7 @@ impl Interpreter {
         //initialize the has state
         let mut hash_state: VarHashState = VarHashState::None;
 
-        let mut current_var: String;
+        let mut current_var: String = String::from("");
         'hashing: loop {
             let token: &Token = &tokens[*index as usize];
             if (token.content.as_str() == "</var>") || ((*index as usize) >= tokens.len()) {
@@ -302,7 +302,7 @@ impl Interpreter {
                             hash_state = VarHashState::VarName;
                         },
                         _ => {
-                            return Err(InterpreterError::Syntax(token.row, token.col));
+                            return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"$\" here")));
                         },
                     }
                 },
@@ -322,17 +322,56 @@ impl Interpreter {
                 },
                 VarHashState::VarType => {
                     match token.content.as_str() {
-                        "@str" => {},
-                        "@ft" => {},
-                        "@vec" => {},
-                        "@exp" => {},
+                        "@str" => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@str"), token.row, token.col));
+                            hash_state = VarHashState::VarDefStrEqual;
+                        },
+                        "@ft" => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@ft"), token.row, token.col));
+                            hash_state = VarHashState::VarDefFont;
+                        },
+                        "@vec" => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@vec"), token.row, token.col));
+                            hash_state = VarHashState::VarDefVec;
+                        },
+                        "@exp" => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@exp"), token.row, token.col));
+                            hash_state = VarHashState::VarDefExp
+                        },
                         
                         _ => {
-                            return Err(InterpreterError::Syntax(token.row, token.col));
+                            return Err(InterpreterError::Syntax(token.row, token.col, String::from("undefined type")));
                         },
                     };
                 },
-                VarHashState::VarDef => {},
+                VarHashState::VarDefStrEqual => {
+                    if token.content.as_str() == "=" {
+                        hash_state = VarHashState::VarDefStrQuota;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
+                    }
+                },
+                VarHashState::VarDefStrQuota => {
+                    if token.content.as_str() == "\"" {
+                        hash_state = VarHashState::VarDefStrQuota;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"\"\" here")));
+                    }
+                },
+                VarHashState::VarDefStrContent => {
+                    match token.content.as_str() {
+                        "\"" => {
+
+                        },
+
+                        _ => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        },
+                    };
+                },
+                VarHashState::VarDefFont => {},
+                VarHashState::VarDefVec => {},
+                VarHashState::VarDefExp => {},
             };
             *index += 1;
         }

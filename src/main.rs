@@ -41,7 +41,7 @@ fn main() -> Result<(), String> {
             match e {
                 InterpreterError::InvalidFile => print!("file issues"),
                 InterpreterError::DecodingError => print!("idk"),
-                InterpreterError::Syntax(row, col) => print!("syntax error at row {}, col {}", row, col),
+                InterpreterError::Syntax(row, col, msg) => print!("syntax error at row {}, col {}, message: {}", row, col, msg),
                 _ => print!("i dont care"),
             }
         },

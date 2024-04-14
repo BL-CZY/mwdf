@@ -22,7 +22,12 @@ pub enum VarHashState {
     None,
     VarName,
     VarType,
-    VarDef,
+    VarDefStrEqual,
+    VarDefStrQuota,
+    VarDefStrContent,
+    VarDefFont,
+    VarDefVec,
+    VarDefExp,
 }
 
 pub enum CanvasInterpretState {
@@ -32,7 +37,7 @@ pub enum CanvasInterpretState {
 }
 
 pub enum InterpreterError {
-    Syntax(u32, u32),
+    Syntax(u32, u32, String),
     NoClosingTag(u32, u32),
     MissingEntryTag(u32, u32),
     MultipleEntryTag(u32, u32),
