@@ -1,5 +1,7 @@
 pub mod structs;
 
+use core::hash;
+use std::env::VarError;
 use std::{collections::HashMap, rc::Rc};
 use std::fs::File;
 use std::io::Read;
@@ -80,7 +82,6 @@ impl Interpreter {
                         '@' => {
                             parse_state = TokenParseState::Builtin;
                             tokens.push(Token::new(String::from("@"), row, col));
-                            tokens.push(Token::new(String::from(""), row, col));
                         },
 
                         //single char tokens
@@ -279,7 +280,7 @@ impl Interpreter {
      * this function takes a list of tokens and the current index and returns a hashmap of the variables
      * *by the end of the function the index would point to the start of the canvas section
      */
-    fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<Token>>, InterpreterError> {
+    pub fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<Token>>, InterpreterError> {
         //initialize the stack
         let mut stack: Vec<&Token> = vec![];
         //initialize the hashmap
@@ -328,15 +329,15 @@ impl Interpreter {
                         },
                         "@ft" => {
                             result.get_mut(&current_var).unwrap().push(Token::new(String::from("@ft"), token.row, token.col));
-                            hash_state = VarHashState::VarDefFont;
+                            hash_state = VarHashState::VarDefFontEqual;
                         },
                         "@vec" => {
                             result.get_mut(&current_var).unwrap().push(Token::new(String::from("@vec"), token.row, token.col));
-                            hash_state = VarHashState::VarDefVec;
+                            hash_state = VarHashState::VarDefVecEqual;
                         },
                         "@exp" => {
                             result.get_mut(&current_var).unwrap().push(Token::new(String::from("@exp"), token.row, token.col));
-                            hash_state = VarHashState::VarDefExp
+                            hash_state = VarHashState::VarDefExpEqual;
                         },
                         
                         _ => {
@@ -361,7 +362,8 @@ impl Interpreter {
                 VarHashState::VarDefStrContent => {
                     match token.content.as_str() {
                         "\"" => {
-
+                            //end of string section
+                            hash_state = VarHashState::VarSemiColon;
                         },
 
                         _ => {
@@ -369,9 +371,91 @@ impl Interpreter {
                         },
                     };
                 },
-                VarHashState::VarDefFont => {},
-                VarHashState::VarDefVec => {},
-                VarHashState::VarDefExp => {},
+                VarHashState::VarDefFontEqual => {
+                    if token.content.as_str() == "=" {
+                        hash_state = VarHashState::VarDefFontQuota;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
+                    }
+                },
+                VarHashState::VarDefFontQuota => {
+                    if token.content.as_str() == "`" {
+                        hash_state = VarHashState::VarDefFontContent;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"`\" here")));
+                    }
+                },
+                VarHashState::VarDefFontContent => {
+                    match token.content.as_str() {
+                        "`" => {
+                            //end of string section
+                            hash_state = VarHashState::VarSemiColon;
+                        },
+
+                        _ => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        },
+                    };
+                },
+                VarHashState::VarDefVecEqual => {
+                    if token.content.as_str() == "=" {
+                        hash_state = VarHashState::VarDefVecParenth;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
+                    }
+                },
+                VarHashState::VarDefVecParenth => {
+                    if token.content.as_str() == "(" {
+                        hash_state = VarHashState::VarDefVecContent;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"(\" here")));
+                    }
+                },
+                VarHashState::VarDefVecContent => {
+                    match token.content.as_str() {
+                        ")" => {
+                            //end of string section
+                            hash_state = VarHashState::VarSemiColon;
+                        },
+
+                        "," => {},
+
+                        _ => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        },
+                    };
+                },
+                VarHashState::VarDefExpEqual => {
+                    if token.content.as_str() == "=" {
+                        hash_state = VarHashState::VarDefExpBran;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
+                    }
+                },
+                VarHashState::VarDefExpBran => {
+                    if token.content.as_str() == "`" {
+                        hash_state = VarHashState::VarDefExpContent;
+                    } else {
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"{\" here")));
+                    }
+                },
+                VarHashState::VarDefExpContent => {
+                    match token.content.as_str() {
+                        "}" => {
+                            //end of string section
+                            hash_state = VarHashState::VarSemiColon;
+                        },
+
+                        _ => {
+                            result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        },
+                    };
+                },
+                VarHashState::VarSemiColon => {
+                    //it's not mandatory to have the semicolon
+                    //*(yet?
+                    hash_state = VarHashState::None;
+                },
             };
             *index += 1;
         }

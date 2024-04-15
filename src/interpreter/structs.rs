@@ -25,9 +25,16 @@ pub enum VarHashState {
     VarDefStrEqual,
     VarDefStrQuota,
     VarDefStrContent,
-    VarDefFont,
-    VarDefVec,
-    VarDefExp,
+    VarDefFontEqual,
+    VarDefFontQuota,
+    VarDefFontContent,
+    VarDefVecEqual,
+    VarDefVecParenth,
+    VarDefVecContent,
+    VarDefExpEqual,
+    VarDefExpBran,
+    VarDefExpContent,
+    VarSemiColon,
 }
 
 pub enum CanvasInterpretState {
