@@ -191,6 +191,8 @@ impl Interpreter {
                             tokens.push(Token::new(String::from(""), row, col));
                         },
 
+                        ' ' | '\n' => {},
+
                         _ => {
                             tokens.last_mut().unwrap().content.push(*character);
                         },
@@ -291,12 +293,15 @@ impl Interpreter {
         let mut current_var: String = String::from("");
         'hashing: loop {
             let token: &Token = &tokens[*index as usize];
-            if (token.content.as_str() == "</var>") || ((*index as usize) >= tokens.len()) {
+            if (token.content.as_str() == "</var>") || ((*index as usize) >= tokens.len() || token.content.as_str() == "<canvas>") {
                 break 'hashing;
             }
             match hash_state {
                 VarHashState::None => {
                     match token.content.as_str() {
+                        //var section starter
+                        "<var>" => {},
+
                         //at this point only accepts $
                         "$" => {
                             //take the name
@@ -341,7 +346,7 @@ impl Interpreter {
                         },
                         
                         _ => {
-                            return Err(InterpreterError::Syntax(token.row, token.col, String::from("undefined type")));
+                            return Err(InterpreterError::Syntax(token.row, token.col, format!("{} is an undefined type", token.content)));
                         },
                     };
                 },
@@ -354,7 +359,7 @@ impl Interpreter {
                 },
                 VarHashState::VarDefStrQuota => {
                     if token.content.as_str() == "\"" {
-                        hash_state = VarHashState::VarDefStrQuota;
+                        hash_state = VarHashState::VarDefStrContent;
                     } else {
                         return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"\"\" here")));
                     }
@@ -433,7 +438,7 @@ impl Interpreter {
                     }
                 },
                 VarHashState::VarDefExpBran => {
-                    if token.content.as_str() == "`" {
+                    if token.content.as_str() == "{" {
                         hash_state = VarHashState::VarDefExpContent;
                     } else {
                         return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"{\" here")));

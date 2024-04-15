@@ -1,8 +1,9 @@
 mod interpreter;
 mod view;
 
-use interpreter::structs::InterpreterError;
+use interpreter::structs::{InterpreterError, Token};
 use sdl2::gfx::primitives::DrawRenderer;
+use sdl2::libc::RWF_NOWAIT;
 use sdl2::rect::Rect;
 use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl, VideoSubsystem};
 
@@ -34,15 +35,33 @@ fn main() -> Result<(), String> {
     // }
 
     let mut interpreter: Interpreter = Interpreter::new();
+    let mut test: Vec<Token> = vec![];
 
     match interpreter.to_token_list("/home/tpl/projects/mwdf/test.dvi") {
-        Ok(..) => {},
+        Ok(result) => {
+            test = result;
+        },
         Err(e) => {
             match e {
                 InterpreterError::InvalidFile => print!("file issues"),
                 InterpreterError::DecodingError => print!("idk"),
                 InterpreterError::Syntax(row, col, msg) => print!("syntax error at row {}, col {}, message: {}", row, col, msg),
                 _ => print!("i dont care"),
+            }
+        },
+    };
+    println!("");
+
+    let mut test_ind = 0;
+
+    match interpreter.parse_var(&mut test, &mut test_ind) {
+        Ok(..) => {},
+        Err(e) => {
+            match e {
+                InterpreterError::Syntax(row, col, msg) => {
+                    println!("syntax error at {}, {}. message: {}", row, col, msg);
+                }
+               _ => println!("idk"), 
             }
         },
     };
