@@ -7,8 +7,6 @@ use sdl2::libc::RWF_NOWAIT;
 use sdl2::rect::Rect;
 use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl, VideoSubsystem};
 
-use interpreter::Interpreter;
-
 fn main() -> Result<(), String> {
     let sdl_context: Sdl = sdl2::init()?;
     let video_system: VideoSubsystem = sdl_context.video()?;
@@ -33,38 +31,6 @@ fn main() -> Result<(), String> {
     //     canvas.fill_rect(Rect::new(5, 1, 20, 10)).unwrap();
     //     canvas.present();
     // }
-
-    let mut interpreter: Interpreter = Interpreter::new();
-    let mut test: Vec<Token> = vec![];
-
-    match interpreter.to_token_list("/home/tpl/projects/mwdf/test.dvi") {
-        Ok(result) => {
-            test = result;
-        },
-        Err(e) => {
-            match e {
-                InterpreterError::InvalidFile => print!("file issues"),
-                InterpreterError::DecodingError => print!("idk"),
-                InterpreterError::Syntax(row, col, msg) => print!("syntax error at row {}, col {}, message: {}", row, col, msg),
-                _ => print!("i dont care"),
-            }
-        },
-    };
-    println!("");
-
-    let mut test_ind = 0;
-
-    match interpreter.parse_var(&mut test, &mut test_ind) {
-        Ok(..) => {},
-        Err(e) => {
-            match e {
-                InterpreterError::Syntax(row, col, msg) => {
-                    println!("syntax error at {}, {}. message: {}", row, col, msg);
-                }
-               _ => println!("idk"), 
-            }
-        },
-    };
 
     Ok(()) 
 }

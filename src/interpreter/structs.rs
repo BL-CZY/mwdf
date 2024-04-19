@@ -58,6 +58,7 @@ pub enum CanvasInterpretState {
     Property,
 }
 
+#[derive(PartialEq)]
 pub enum InterpreterError {
     Syntax(u32, u32, String),
     NoClosingTag(u32, u32),
@@ -71,7 +72,7 @@ pub enum InterpreterError {
     DecodingError,
 }
 
-pub enum VarListType {
+pub enum VarListElement {
     Token(Token),
     ArgDescriptor(ArgDescriptor),
 }
