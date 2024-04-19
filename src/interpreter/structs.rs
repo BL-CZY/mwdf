@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 pub enum TokenParseState {
     None,
     Tag,
@@ -22,18 +24,31 @@ pub enum VarHashState {
     None,
     VarName,
     VarType,
+
     VarDefStrEqual,
     VarDefStrQuota,
     VarDefStrContent,
+
     VarDefFontEqual,
     VarDefFontQuota,
     VarDefFontContent,
+
     VarDefVecEqual,
     VarDefVecParenth,
     VarDefVecContent,
+
     VarDefExpEqual,
-    VarDefExpBran,
+    VarDefExpArgsBracket,
+    VarDefExpArgsDollar,
+    VarDefExpArgsName,
+    VarDefExpArgsColon,
+    VarDefExpArgsType,
+    VarDefExpArgsNext,
+
+    VarDefExpArrow,
+    VarDefExpContentBracket,
     VarDefExpContent,
+
     VarSemiColon,
 }
 
@@ -56,6 +71,11 @@ pub enum InterpreterError {
     DecodingError,
 }
 
+pub enum VarListType {
+    Token(Token),
+    ArgDescriptor(ArgDescriptor),
+}
+
 pub struct Token {
     pub content: String,
     pub row: u32,
@@ -63,8 +83,24 @@ pub struct Token {
 }
 
 impl Token {
+    pub fn new_empty() -> Self {
+        Self {
+            content: format!(""),
+            row: 0,
+            col: 0,
+        }
+    }
+
     pub fn new(content: String, row: u32, col: u32) -> Self {
         Self {content, row, col}
+    }
+
+    pub fn from(token: &Token) -> Self {
+        Self {
+            content: String::from(token.content),
+            row: token.row,
+            col: token.col,
+        }
     }
 
     pub fn is_closing_tag(&mut self) -> bool {
@@ -97,5 +133,17 @@ impl Token {
         }
 
         false
+    }
+}
+
+pub struct ArgDescriptor {
+    pub arg_num: u32,
+}
+
+impl ArgDescriptor {
+    pub fn new() -> Self {
+        Self {
+            arg_num: 0,
+        }
     }
 }

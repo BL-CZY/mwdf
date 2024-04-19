@@ -6,7 +6,7 @@ use std::{collections::HashMap, rc::Rc};
 use std::fs::File;
 use std::io::Read;
 use crate::view::elements::Element;
-use self::structs::{ TokenParseState, TokenConvertState, InterpreterError, CanvasInterpretState, Token, VarHashState };
+use self::structs::{ CanvasInterpretState, InterpreterError, Token, TokenConvertState, TokenParseState, VarHashState, VarListType };
 
 pub struct Interpreter {  }
 
@@ -282,11 +282,11 @@ impl Interpreter {
      * this function takes a list of tokens and the current index and returns a hashmap of the variables
      * *by the end of the function the index would point to the start of the canvas section
      */
-    pub fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<Token>>, InterpreterError> {
+    pub fn parse_var(&mut self, tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<VarListType>>, InterpreterError> {
         //initialize the stack
         let mut stack: Vec<&Token> = vec![];
         //initialize the hashmap
-        let mut result: HashMap<String, Vec<Token>> = HashMap::new();
+        let mut result: HashMap<String, Vec<VarListType>> = HashMap::new();
         //initialize the has state
         let mut hash_state: VarHashState = VarHashState::None;
 
@@ -329,19 +329,19 @@ impl Interpreter {
                 VarHashState::VarType => {
                     match token.content.as_str() {
                         "@str" => {
-                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@str"), token.row, token.col));
+                            result.get_mut(&current_var).unwrap().push(VarListType::Token(Token::from(token)));
                             hash_state = VarHashState::VarDefStrEqual;
                         },
                         "@ft" => {
-                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@ft"), token.row, token.col));
+                            result.get_mut(&current_var).unwrap().push(VarListType::Token(Token::from(token)));
                             hash_state = VarHashState::VarDefFontEqual;
                         },
                         "@vec" => {
-                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@vec"), token.row, token.col));
+                            result.get_mut(&current_var).unwrap().push(VarListType::Token(Token::from(token)));
                             hash_state = VarHashState::VarDefVecEqual;
                         },
                         "@exp" => {
-                            result.get_mut(&current_var).unwrap().push(Token::new(String::from("@exp"), token.row, token.col));
+                            result.get_mut(&current_var).unwrap().push(VarListType::Token(Token::from(token)));
                             hash_state = VarHashState::VarDefExpEqual;
                         },
                         
@@ -432,14 +432,14 @@ impl Interpreter {
                 },
                 VarHashState::VarDefExpEqual => {
                     if token.content.as_str() == "=" {
-                        hash_state = VarHashState::VarDefExpBran;
+                        hash_state = VarHashState::VarDefExpArgsBracket;
                     } else {
                         return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
                     }
                 },
-                VarHashState::VarDefExpBran => {
+                VarHashState::VarDefExpArgsBracket => {
                     if token.content.as_str() == "{" {
-                        hash_state = VarHashState::VarDefExpContent;
+                        hash_state = VarHashState::VarDefExpArgsDollar;
                     } else {
                         return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"{\" here")));
                     }
