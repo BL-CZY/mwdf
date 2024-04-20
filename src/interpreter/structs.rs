@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 pub enum TokenParseState {
     None,
     Tag,
@@ -61,6 +59,7 @@ pub enum CanvasInterpretState {
 #[derive(PartialEq)]
 pub enum InterpreterError {
     Syntax(u32, u32, String),
+    InternalError(String),
     NoClosingTag(u32, u32),
     MissingEntryTag(u32, u32),
     MultipleEntryTag(u32, u32),
@@ -98,7 +97,7 @@ impl Token {
 
     pub fn from(token: &Token) -> Self {
         Self {
-            content: String::from(token.content),
+            content: String::from(&token.content),
             row: token.row,
             col: token.col,
         }
@@ -123,7 +122,6 @@ impl Token {
         }
 
         //check if the rest are the same
-        let str: &str = &tag.content[2..];
         if tag.content.chars().skip(2).collect::<String>() == self.content.chars().skip(1).collect::<String>() {
             //check if the tag comes after self
             if self.row < tag.row {

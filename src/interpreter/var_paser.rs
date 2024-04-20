@@ -1,6 +1,18 @@
 use std::collections::HashMap;
 
+use crate::interpreter::structs::ArgDescriptor;
+
 use super::structs::{Token, InterpreterError, VarHashState, VarListElement};
+
+macro_rules! check_single_token {
+    ($token:expr, $hash_state:expr, $expected:expr, $state:expr) => {
+        if $token.content.as_str() == $expected {
+            $hash_state = $state;
+        } else {
+            return Err(InterpreterError::Syntax($token.row, $token.col, format!("expect \"{}\" here", $expected)));
+        }
+    };
+}
 
 pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<VarListElement>>, InterpreterError> {
     //initialize the stack
@@ -71,18 +83,10 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                 };
             },
             VarHashState::VarDefStrEqual => {
-                if token.content.as_str() == "=" {
-                    hash_state = VarHashState::VarDefStrQuota;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
-                }
+                check_single_token!(token, hash_state, "=", VarHashState::VarDefStrQuota);
             },
             VarHashState::VarDefStrQuota => {
-                if token.content.as_str() == "\"" {
-                    hash_state = VarHashState::VarDefStrContent;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"\"\" here")));
-                }
+                check_single_token!(token, hash_state, "\"", VarHashState::VarDefStrContent);
             },
             VarHashState::VarDefStrContent => {
                 match token.content.as_str() {
@@ -92,23 +96,15 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                     },
 
                     _ => {
-                        result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
                     },
                 };
             },
             VarHashState::VarDefFontEqual => {
-                if token.content.as_str() == "=" {
-                    hash_state = VarHashState::VarDefFontQuota;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
-                }
+                check_single_token!(token, hash_state, "=", VarHashState::VarDefFontQuota);
             },
             VarHashState::VarDefFontQuota => {
-                if token.content.as_str() == "`" {
-                    hash_state = VarHashState::VarDefFontContent;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"`\" here")));
-                }
+                check_single_token!(token, hash_state, "`", VarHashState::VarDefFontContent);
             },
             VarHashState::VarDefFontContent => {
                 match token.content.as_str() {
@@ -118,16 +114,12 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                     },
 
                     _ => {
-                        result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
                     },
                 };
             },
             VarHashState::VarDefVecEqual => {
-                if token.content.as_str() == "=" {
-                    hash_state = VarHashState::VarDefVecParenth;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
-                }
+                check_single_token!(token, hash_state, "=", VarHashState::VarDefVecParenth);
             },
             VarHashState::VarDefVecParenth => {
                 if token.content.as_str() == "(" {
@@ -146,23 +138,51 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                     "," => {},
 
                     _ => {
-                        result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
                     },
                 };
             },
             VarHashState::VarDefExpEqual => {
-                if token.content.as_str() == "=" {
-                    hash_state = VarHashState::VarDefExpArgsBracket;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"=\" here")));
-                }
+                check_single_token!(token, hash_state, "=", VarHashState::VarDefExpArgsBracket);
             },
             VarHashState::VarDefExpArgsBracket => {
-                if token.content.as_str() == "{" {
-                    hash_state = VarHashState::VarDefExpArgsDollar;
-                } else {
-                    return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \"{\" here")));
-                }
+                //initialize the arg number counter
+                check_single_token!(token, hash_state, "{", VarHashState::VarDefExpArgsDollar);
+                result.get_mut(&current_var).unwrap().push(VarListElement::ArgDescriptor(ArgDescriptor::new()));
+            },
+            VarHashState::VarDefExpArgsDollar => {
+                check_single_token!(token, hash_state, "$", VarHashState::VarDefExpArgsName);
+
+                //when there is a new variable, increment the arg number counter by one
+                //it should be the 3rd element, as the first is the name, and the second is the type
+                match result.get_mut(&current_var).unwrap()
+                    .iter_mut().nth(2).unwrap() {
+                        VarListElement::ArgDescriptor(val) => {
+                            val.arg_num += 1;
+                        },
+                        _ => {
+                            return Err(InterpreterError::InternalError(format!("bad var hashtable structure")));
+                        },
+                    };
+            },
+            VarHashState::VarDefExpArgsName => {
+                result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
+                hash_state = VarHashState::VarDefExpArgsColon;
+            },
+            VarHashState::VarDefExpArgsColon => {
+                check_single_token!(token, hash_state, ":", VarHashState::VarDefExpArgsType);
+            },
+            VarHashState::VarDefExpArgsType => {
+                //push the type
+                result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
+                hash_state = VarHashState::VarDefExpArgsNext;
+            },
+            VarHashState::VarDefExpArgsNext => {
+                match token.content.as_str() {
+                    "," => {},
+                    "}" => {},
+                    _ => {},
+                };
             },
             VarHashState::VarDefExpContent => {
                 match token.content.as_str() {
@@ -172,7 +192,7 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                     },
 
                     _ => {
-                        result.get_mut(&current_var).unwrap().push(Token::new(String::from(token.content.as_str()), token.row, token.col));
+                        result.get_mut(&current_var).unwrap().push(VarListElement::Token(Token::from(token)));
                     },
                 };
             },

@@ -38,16 +38,17 @@ pub fn interpret(path: &str) -> Result<Vec<Element>, InterpreterError> {
     match var_paser::parse_var(&tokens, &mut index) {
         Ok(result) => vars = result,
         Err(e) => {
-            match e {
+            match &e {
                 InterpreterError::Syntax(row, col, msg) => {
                     println!("Var Parser: syntax error at line {}, character {}, message: {}", row, col, msg);
-                    return Err(e);
                 },
 
                 _ => {
                     println!("unhandled error");
                 },
             };
+
+            return Err(e);
         },
     };
 
