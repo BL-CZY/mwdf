@@ -9,7 +9,7 @@
     $decimal: @vec = (1.23232);
     $percent: @vec = (30%);
     
-    $template: @exp = { $a: @str, $b: @int } -> {
+    $template: @exp = { $a: @str, $b: @vec } -> {
         <label>
         # this is a mark #
         *property | @inherit(parent):

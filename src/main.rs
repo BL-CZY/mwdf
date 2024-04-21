@@ -31,6 +31,9 @@ fn main() -> Result<(), String> {
     //     canvas.fill_rect(Rect::new(5, 1, 20, 10)).unwrap();
     //     canvas.present();
     // }
-
-    Ok(()) 
+    
+    match interpreter::interpret_file("/home/tpl/projects/mwdf/test.dvi") {
+        _ => {},
+    };
+    Ok(())
 }

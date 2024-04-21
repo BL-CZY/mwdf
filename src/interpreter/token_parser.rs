@@ -222,12 +222,16 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
                   //new element in a vector
                   ',' => {
                         tokens.push(Token::new(String::from(*character), row, col));
+                        tokens.push(Token::new(format!(""), row, col));
                   },
                   //another pair of )
                   ')' => {
                         parse_state = TokenParseState::None;
                         tokens.push(Token::new(String::from(")"), row, col));
                   },
+                  
+                  ' ' | '\n' => {},
+
                   _ => {
                         tokens.last_mut().unwrap().content.push(*character);
                   },
@@ -257,8 +261,13 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
    };
 
    for token in tokens.iter() {
-      print!("{} ", token.content);
+      print!("{}", token.content);
    };
+   println!("");
+
+   if tokens.len() == 0 {
+      return Err(InterpreterError::EmptyFile);
+   }
 
    Ok(tokens)
 }

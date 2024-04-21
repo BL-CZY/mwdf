@@ -18,9 +18,11 @@ pub enum TokenConvertState {
     Canvas,
 }
 
+#[derive(PartialEq)]
 pub enum VarHashState {
     None,
     VarName,
+    VarTypeColon,
     VarType,
 
     VarDefStrEqual,
@@ -60,12 +62,6 @@ pub enum CanvasInterpretState {
 pub enum InterpreterError {
     Syntax(u32, u32, String),
     InternalError(String),
-    NoClosingTag(u32, u32),
-    MissingEntryTag(u32, u32),
-    MultipleEntryTag(u32, u32),
-    IllegalTagStart(u32, u32),
-    BrokenSection(u32, u32),
-    InvalidToken(u32, u32),
     InvalidFile,
     EmptyFile,
     DecodingError,

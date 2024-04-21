@@ -15,8 +15,6 @@ macro_rules! check_single_token {
 }
 
 pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String, Vec<VarListElement>>, InterpreterError> {
-    //initialize the stack
-    let mut stack: Vec<&Token> = vec![];
     //initialize the hashmap
     let mut result: HashMap<String, Vec<VarListElement>> = HashMap::new();
     //initialize the has state
@@ -26,6 +24,10 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
     'hashing: loop {
         let token: &Token = &tokens[*index as usize];
         if (token.content.as_str() == "</var>") || ((*index as usize) >= tokens.len() || token.content.as_str() == "<canvas>") {
+            //check if it's the start of the var declaration cycle
+            if hash_state != VarHashState::None {
+                return Err(InterpreterError::Syntax(token.row, token.col, format!("incomplete variable declaration")));
+            }
             break 'hashing;
         }
         match hash_state {
@@ -45,18 +47,12 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                 }
             },
             VarHashState::VarName => {
-                match token.content.as_str() {
-                    //type
-                    ":" => {
-                        hash_state = VarHashState::VarType;
-                    },
-
-                    //hash the name
-                    _ => {
-                        current_var = String::from(&token.content);
-                        result.insert(String::from(&token.content), vec![]);
-                    },
-                };
+                current_var = String::from(&token.content);
+                result.insert(String::from(&token.content), vec![]);
+                hash_state = VarHashState::VarTypeColon;
+            },
+            VarHashState::VarTypeColon => {
+                check_single_token!(token, hash_state, ":", VarHashState::VarType);
             },
             VarHashState::VarType => {
                 match token.content.as_str() {
@@ -156,7 +152,7 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                 //when there is a new variable, increment the arg number counter by one
                 //it should be the 3rd element, as the first is the name, and the second is the type
                 match result.get_mut(&current_var).unwrap()
-                    .iter_mut().nth(2).unwrap() {
+                    .iter_mut().nth(1).unwrap() {
                         VarListElement::ArgDescriptor(val) => {
                             val.arg_num += 1;
                         },
@@ -179,10 +175,25 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
             },
             VarHashState::VarDefExpArgsNext => {
                 match token.content.as_str() {
-                    "," => {},
-                    "}" => {},
-                    _ => {},
+                    "," => {
+                        //expecting the next to be the dollar sign
+                        hash_state = VarHashState::VarDefExpArgsDollar;
+                    },
+                    "}" => {
+                        //expecting the next to be the -> token
+                        hash_state = VarHashState::VarDefExpArrow;
+                    },
+                    _ => {
+                        //there is a syntax error
+                        return Err(InterpreterError::Syntax(token.row, token.col, String::from("expect \",\" or \"}\" here")));
+                    },
                 };
+            },
+            VarHashState::VarDefExpArrow => {
+                check_single_token!(token, hash_state, "->", VarHashState::VarDefExpContentBracket);
+            },
+            VarHashState::VarDefExpContentBracket => {
+                check_single_token!(token, hash_state, "{", VarHashState::VarDefExpContent);
             },
             VarHashState::VarDefExpContent => {
                 match token.content.as_str() {
