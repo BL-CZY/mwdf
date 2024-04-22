@@ -84,7 +84,6 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
                   '*' => {
                         parse_state = TokenParseState::Mark;
                         tokens.push(Token::new(String::from("*"), row, col));
-                        tokens.push(Token::new(String::from(""), row, col));
                   },
 
                   //property
@@ -261,7 +260,7 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
    };
 
    for token in tokens.iter() {
-      print!("{}", token.content);
+      print!("{} ", token.content);
    };
    println!("");
 

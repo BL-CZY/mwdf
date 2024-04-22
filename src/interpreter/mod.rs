@@ -1,6 +1,7 @@
 pub mod structs;
 pub mod token_parser;
 pub mod var_paser;
+pub mod canvas_parser;
 
 use std::collections::HashMap;
 use crate::view::elements::Element;
@@ -60,7 +61,7 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
         },
     };
 
-    for (key, val) in vars.iter() {
+    for (.., val) in vars.iter() {
         for i in val.iter() {
             match i {
                 VarListElement::Token(t) => {
