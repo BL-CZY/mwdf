@@ -96,3 +96,29 @@ impl ArgDescriptor {
         }
     }
 }
+
+pub fn is_open_tag(token: &Token) -> bool {
+    if token.content.chars().count() < 2 {
+        //if it's too short, false
+        false
+    } else if token.content.chars().nth(0).unwrap() == '<' {
+        //if the first element is <, true
+        true
+    } else {
+        false
+    }
+}
+
+pub fn is_close_tag(token: &Token) -> bool {
+    if token.content.chars().count() < 3 {
+        false
+    } else if token.content.chars().nth(0).unwrap() == '<' && token.content.chars().nth(1).unwrap() == '/' {
+        true
+    } else {
+        false
+    }
+}
+
+pub fn is_close_tag_to(compare: &Token, target: &Token) -> bool {
+
+}
