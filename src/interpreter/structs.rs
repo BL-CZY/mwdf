@@ -120,5 +120,13 @@ pub fn is_close_tag(token: &Token) -> bool {
 }
 
 pub fn is_closing_tag_to(expected_closing_tag: &Token, opening_tag: &Token) -> bool {
-    false 
+    if !is_open_tag(opening_tag) || !is_close_tag(expected_closing_tag) {
+        return false;
+    } else if expected_closing_tag.content.chars().count() != opening_tag.content.chars().count() + 1 {
+        return false;
+    } else if &expected_closing_tag.content[3..] == &opening_tag.content[2..] {
+        return true;
+    }
+
+    false
 }
