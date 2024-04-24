@@ -6,6 +6,9 @@ use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
 use crate::view::elements::Element;
 
 pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>, InterpreterError> {
+    if tokens[*index as usize].content.as_str() != "<canvas>" {
+        return Err(InterpreterError::Syntax(tokens[*index as usize].row, tokens[*index as usize].col, format!("expect <canvas> here")));
+    }
     //initialize the stack
     let mut stack: Vec<(&Token, Option<&CanvasNode>)> = vec![];
     //initialize the interpret state
@@ -13,9 +16,11 @@ pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>
     //initialize the result vector
     let mut result: Vec<Element> = vec![];
     //initialize the graph
-    let mut top_node: Option<CanvasNode> = None;
+    let top_node: Option<CanvasNode> = Some(CanvasNode::new(&tokens[*index as usize], None, vec![]));
     //initialize the current serving node
-    let mut current_node: Option<&CanvasNode> = None;
+    let mut current_node: Option<&CanvasNode> = top_node.as_ref();
+
+    stack.push((&tokens[*index as usize], current_node));
 
     //start parsing
     for token in tokens.iter() {
@@ -25,8 +30,6 @@ pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>
                 return Err(InterpreterError::Syntax(token.row, token.col, format!("expect <canvas> here")));
             } else {
                 //initialize the top node
-                top_node = Some(CanvasNode::new(&token, None, vec![]));
-                current_node = top_node.as_ref();
                 stack.push((&token, top_node.as_ref()))
             }
         }
