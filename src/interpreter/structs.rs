@@ -119,6 +119,6 @@ pub fn is_close_tag(token: &Token) -> bool {
     }
 }
 
-pub fn is_close_tag_to(compare: &Token, target: &Token) -> bool {
-
+pub fn is_closing_tag_to(expected_closing_tag: &Token, opening_tag: &Token) -> bool {
+    false 
 }
