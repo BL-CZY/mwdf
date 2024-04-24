@@ -7,21 +7,34 @@ use crate::view::elements::Element;
 
 pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>, InterpreterError> {
     //initialize the stack
-    let mut stack: Vec<(&Token, &CanvasNode)> = vec![];
+    let mut stack: Vec<(&Token, Option<&CanvasNode>)> = vec![];
     //initialize the interpret state
     let mut interpret_state: CanvasInterpretState = CanvasInterpretState::None;
     //initialize the result vector
     let mut result: Vec<Element> = vec![];
     //initialize the graph
-    let mut top_node: CanvasNode;
+    let mut top_node: Option<CanvasNode> = None;
     //initialize the current serving node
-    let mut current_node: CanvasNode;
+    let mut current_node: Option<&CanvasNode> = None;
 
     //start parsing
     for token in tokens.iter() {
+        //at the beginning, check for the <canvas> node, which will be at the top of the graph
+        if stack.len() == 0 {
+            if token.content.as_str() != "<canvas>" {
+                return Err(InterpreterError::Syntax(token.row, token.col, format!("expect <canvas> here")));
+            } else {
+                //initialize the top node
+                top_node = Some(CanvasNode::new(&token, None, vec![]));
+                current_node = top_node.as_ref();
+                stack.push((&token, top_node.as_ref()))
+            }
+        }
+
+        //deal with the tags
         if structs::is_open_tag(token) {
             //if it's an open tag, push it to the stack
-            //TODO push to the stack
+
         } else if structs::is_close_tag(token) {
             //if it's a close tag, match it to the last element on the stack
             //if the stack if empty, return an error
@@ -36,11 +49,12 @@ pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>
 
         //if it's not a tag, match the rest
         match interpret_state {
-            None => {
+            CanvasInterpretState::None => {
                 match token.content.as_str() {
-
+                    _ => {},
                 };
             },
+            _ => {},
         };
     }
     Ok(vec![])

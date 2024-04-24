@@ -1,15 +1,13 @@
 use crate::interpreter::structs::Token;
 
-use std::boxed::Box;
-
-pub struct CanvasNode {
-    pub value: Token,
-    pub parent: Option<Box<CanvasNode>>,
-    pub children: Vec<Box<CanvasNode>>,
+pub struct CanvasNode<'a> {
+    pub value: &'a Token,
+    pub parent: Option<&'a CanvasNode<'a>>,
+    pub children: Vec<CanvasNode<'a>>,
 }
 
-impl CanvasNode {
-    pub fn new(value: Token, parent: Option<Box<CanvasNode>>, children: Vec<Box<CanvasNode>>) -> Self {
+impl<'a> CanvasNode<'a> {
+    pub fn new(value: &'a Token, parent: Option<&'a CanvasNode>, children: Vec<CanvasNode<'a>>) -> Self {
         Self { value, parent, children }
     }
 
