@@ -1,7 +1,8 @@
-pub mod panel;
+pub mod base;
 
-use crate::view::elements::panel::Panel;
+use base::{ Panel, Canvas };
 
 pub enum Element {
+    Canvas(Canvas),
     Panel(Panel),
 }

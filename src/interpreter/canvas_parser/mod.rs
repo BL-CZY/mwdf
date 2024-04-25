@@ -16,7 +16,7 @@ pub fn parse_canvas(tokens: &Vec<Token>, index: &mut u32) -> Result<Vec<Element>
     //initialize the result vector
     let mut result: Vec<Element> = vec![];
     //initialize the graph
-    let top_node: Option<CanvasNode> = Some(CanvasNode::new(&tokens[*index as usize], None, vec![]));
+    let top_node: Option<CanvasNode> = Some(, None, vec![]));
     //initialize the current serving node
     let mut current_node: Option<&CanvasNode> = top_node.as_ref();
 
