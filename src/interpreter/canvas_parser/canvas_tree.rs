@@ -1,13 +1,15 @@
 use crate::view::elements::Element;
 
-pub struct CanvasNode<'a> {
+use std::{cell::RefCell, rc::Rc};
+
+pub struct CanvasNode {
     pub value: Element,
-    pub parent: Option<&'a CanvasNode<'a>>,
-    pub children: Vec<CanvasNode<'a>>,
+    pub parent: Option<Rc<RefCell<CanvasNode>>>,
+    pub children: Vec<Rc<RefCell<CanvasNode>>>,
 }
 
-impl<'a> CanvasNode<'a> {
-    pub fn new(value: Element, parent: Option<&'a CanvasNode>, children: Vec<CanvasNode<'a>>) -> Self {
+impl CanvasNode {
+    pub fn new(value: Element, parent: Option<Rc<RefCell<CanvasNode>>>, children: Vec<Rc<RefCell<CanvasNode>>>) -> Self {
         Self { value, parent, children }
     }
 }

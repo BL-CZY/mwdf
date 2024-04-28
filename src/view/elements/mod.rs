@@ -1,4 +1,5 @@
 pub mod base;
+pub mod text;
 
 use base::{ Panel, Canvas };
 

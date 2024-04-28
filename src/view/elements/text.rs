@@ -10,6 +10,11 @@ pub struct Label {
 
 impl Label {
     pub fn new() -> Self {
-
+        Self {
+            start: Point::new(0, 0),
+            content: String::from(""),
+            text_color: Color::RGB(0, 0, 0),
+            font: String::from(""),
+        }
     }
 }

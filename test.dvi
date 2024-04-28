@@ -24,7 +24,7 @@
         ^position: # this is a vector # (20, 30);
         ^size: (10, 10);
 
-    *tag:
+    *children:
         <label>
         *property | @inherit(parent):
             ^position: @inherit(parent);
