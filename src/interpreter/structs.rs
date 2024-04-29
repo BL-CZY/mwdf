@@ -47,8 +47,6 @@ pub enum VarHashState {
 
 pub enum CanvasInterpretState {
     None,
-    Tag,
-    Property,
 }
 
 #[derive(PartialEq)]

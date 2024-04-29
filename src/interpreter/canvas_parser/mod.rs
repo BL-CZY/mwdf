@@ -7,6 +7,19 @@ use crate::view::elements::{base::{Canvas, Panel}, Element};
 
 use std::{cell::RefCell, rc::Rc};
 
+macro_rules! new_node {
+    ($element: literal, $current_parent: expr) => {
+        //create an element
+        let temp_ele: $element = $element::new();
+        let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
+            Element::Panel(temp_ele),
+            Some(Rc::clone(&$current_parent)), 
+            vec![])));
+        $current_parent.borrow_mut().children.push(Rc::clone(&temp_node));
+        $current_parent = Rc::clone(&temp_node);
+    };
+}
+
 //this function takes in the tokens and the current index, and will return a tree representing the nodes
 pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
     if tokens[*index as usize].content.as_str() != "<canvas>" {
@@ -40,9 +53,12 @@ pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCe
                 "<panel>" => {
                     //create an element
                     let temp_ele: Panel = Panel::new();
-                    current_parent_node.borrow_mut().children
-                        .push(Rc::new(RefCell::new(CanvasNode::new(Element::Panel(temp_ele),
-                            Some(Rc::clone(&current_parent_node)), vec![]))));
+                    let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
+                        Element::Panel(temp_ele),
+                        Some(Rc::clone(&current_parent_node)), 
+                        vec![])));
+                    current_parent_node.borrow_mut().children.push(Rc::clone(&temp_node));
+                    current_parent_node = Rc::clone(&temp_node);
                 },
                 "<label>" => {},
                 _ => {

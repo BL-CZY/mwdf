@@ -200,6 +200,7 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
                         parse_state = TokenParseState::None;
                         tokens.push(Token::new(String::from(*character), row, col));
                   },
+                  ' ' | '\n' => {},
                   _ => {
                         tokens.last_mut().unwrap().content.push(*character);
                   },

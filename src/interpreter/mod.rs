@@ -76,9 +76,6 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
         println!("");
     }
 
-    println!("{}", index);
-    println!("{}", tokens.iter().nth(index as usize).unwrap().content);
-
     match canvas_parser::parse_canvas(&tokens, &mut index) {
         _ => {},
     };
