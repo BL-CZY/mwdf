@@ -47,12 +47,15 @@ pub enum VarHashState {
 
 pub enum CanvasInterpretState {
     None,
+    Property,
+    PropertyEntry,
+    PropertyExtra,
 }
 
 #[derive(PartialEq)]
 pub enum InterpreterError {
     Syntax(u32, u32, String),
-    InternalError(String),
+    InternalError(u32, u32, String),
     InvalidFile,
     EmptyFile,
     DecodingError,

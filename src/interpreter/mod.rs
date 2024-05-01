@@ -48,8 +48,8 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
                     println!("Var Parser: syntax error at line {}, character {}, message: {}", row, col, msg);
                 },
 
-                InterpreterError::InternalError(msg) => {
-                    println!("INTERNAL ERROR: {}", msg);
+                InterpreterError::InternalError(row, col, msg) => {
+                    println!("INTERNAL ERROR at {}, {}: {}", row, col, msg);
                 },
 
                 _ => {
@@ -76,7 +76,7 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
         println!("");
     }
 
-    match canvas_parser::parse_canvas(&tokens, &mut index) {
+    match canvas_parser::parse_canvas(&tokens[index as usize..], &mut index) {
         _ => {},
     };
     

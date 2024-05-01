@@ -4,6 +4,7 @@ use crate::interpreter::structs::ArgDescriptor;
 
 use super::structs::{Token, InterpreterError, VarHashState, VarListElement};
 
+#[macro_export]
 macro_rules! check_single_token {
     ($token:expr, $hash_state:expr, $expected:expr, $state:expr) => {
         if $token.content.as_str() == $expected {
@@ -157,7 +158,7 @@ pub fn parse_var(tokens: &Vec<Token>, index: &mut u32) -> Result<HashMap<String,
                             val.arg_num += 1;
                         },
                         _ => {
-                            return Err(InterpreterError::InternalError(format!("bad var hashtable structure")));
+                            return Err(InterpreterError::InternalError(token.row, token.col, format!("bad var hashtable structure")));
                         },
                     };
             },

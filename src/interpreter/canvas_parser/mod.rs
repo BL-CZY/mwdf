@@ -3,27 +3,35 @@ pub mod canvas_tree;
 use self::canvas_tree::CanvasNode;
 
 use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
+use super::var_paser;
+use crate::check_single_token;
 use crate::view::elements::{base::{Canvas, Panel}, Element};
 
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! new_node {
-    ($element: literal, $current_parent: expr) => {
+    ($element: ty, $new: expr, $parent: ident, $stack: ident, $token: ident) => {
         //create an element
-        let temp_ele: $element = $element::new();
+        let temp_ele: $element = $new;
+        //create a node
         let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
             Element::Panel(temp_ele),
-            Some(Rc::clone(&$current_parent)), 
+            Some(Rc::clone(&$parent)), 
             vec![])));
-        $current_parent.borrow_mut().children.push(Rc::clone(&temp_node));
-        $current_parent = Rc::clone(&temp_node);
+        //add the children to the current parent
+        $parent.borrow_mut().children.push(Rc::clone(&temp_node));
+        //switch the current parent to the created element
+        $parent = Rc::clone(&temp_node);
+        //push the node to the stack
+        $stack.push((&$token, Rc::clone(&temp_node)));
     };
 }
 
-//this function takes in the tokens and the current index, and will return a tree representing the nodes
-pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
-    if tokens[*index as usize].content.as_str() != "<canvas>" {
-        return Err(InterpreterError::Syntax(tokens[*index as usize].row, tokens[*index as usize].col, format!("expect <canvas> here")));
+//this function takes in a piece of the token vector and the current index, and will return a tree representing the nodes
+//the tree will be one canvas
+pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
+    if tokens[0].content.as_str() != "<canvas>" {
+        return Err(InterpreterError::Syntax(tokens[0].row, tokens[0].col, format!("expect <canvas> here")));
     }
     //initialize the stack
     let mut stack: Vec<(&Token, Rc<RefCell<CanvasNode>>)> = vec![];
@@ -35,11 +43,12 @@ pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCe
     //this is a mutable reference to the children vector of the current parent node
     let mut current_parent_node: Rc<RefCell<CanvasNode>> = Rc::clone(&result);
     //push the result node to the stack
-    stack.push((&tokens[*index as usize], Rc::clone(&result)));
+    stack.push((&tokens[0], Rc::clone(&result)));
     *index += 1;
 
     //start parsing
-    for token in tokens.iter() {
+    //start from the second element as the first is executed
+    for token in tokens[1..].iter() {
         //if it's the last element, stop
         if (*index as usize) >= tokens.len() {
             break;
@@ -51,16 +60,11 @@ pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCe
             //check for the tag types
             match token.content.as_str() {
                 "<panel>" => {
-                    //create an element
-                    let temp_ele: Panel = Panel::new();
-                    let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
-                        Element::Panel(temp_ele),
-                        Some(Rc::clone(&current_parent_node)), 
-                        vec![])));
-                    current_parent_node.borrow_mut().children.push(Rc::clone(&temp_node));
-                    current_parent_node = Rc::clone(&temp_node);
+                    new_node!(Panel, Panel::new(), current_parent_node, stack, token);
                 },
-                "<label>" => {},
+                "<label>" => {
+                    new_node!(Panel, Panel::new(), current_parent_node, stack, token);
+                },
                 _ => {
                     return Err(InterpreterError::Syntax(token.row, token.col, format!("unknown tag")));
                 },
@@ -74,9 +78,19 @@ pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCe
 
             if structs::is_closing_tag_to(token, stack.last().unwrap().0) {
                 if stack.len() > 0 {
+                    //pop the stack
                     stack.pop();
+
+                    //if the node doesn't have a parent, there is an internal error
+                    if let None = current_parent_node.borrow().parent {
+                        return Err(InterpreterError::InternalError(token.row, token.col, format!("try to trace back to the parent of a node, but failed to find one")))
+                    }
+
+                    //if the node has parent, change the current parent node to the parent
+                    let temp = Rc::clone(&current_parent_node.borrow().parent.as_ref().unwrap());
+                    current_parent_node = Rc::clone(&temp);
                 } else {
-                    return Err(InterpreterError::InternalError(format!("for some reason it tries to pop the element while the stack is empty")))
+                    return Err(InterpreterError::InternalError(token.row, token.col, format!("for some reason it tries to pop the element while the stack is empty")))
                 }
             } else {
                 //if doesn't match, throw an error
@@ -88,8 +102,27 @@ pub fn parse_canvas<'a>(tokens: &Vec<Token>, index: &mut u32) -> Result<Rc<RefCe
         match interpret_state {
             CanvasInterpretState::None => {
                 match token.content.as_str() {
-                    _ => {},
+                    "*property" => {
+                        //parse properties
+                        interpret_state = CanvasInterpretState::Property;
+                    }
+                    _ => {
+                        return Err(InterpreterError::Syntax(token.row, token.col, format!("expect \"*property\" here")));
+                    },
                 };
+            },
+            CanvasInterpretState::Property => {
+                match token.content.as_str() {
+                    ":" => {
+
+                    },
+
+                    "|" => {},
+
+                    _ => {
+                        return Err(InterpreterError::Syntax(token.row, token.col, format!("expect \":\" or \"|\" here")));
+                    },
+                }
             },
             _ => {},
         };
