@@ -102,8 +102,8 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
         match interpret_state {
             CanvasInterpretState::None => {
                 match token.content.as_str() {
-                    "*property" => {
-                        //parse properties
+                    "--" => {
+                        //the start of a property
                         interpret_state = CanvasInterpretState::Property;
                     }
                     _ => {
@@ -112,17 +112,6 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
                 };
             },
             CanvasInterpretState::Property => {
-                match token.content.as_str() {
-                    ":" => {
-
-                    },
-
-                    "|" => {},
-
-                    _ => {
-                        return Err(InterpreterError::Syntax(token.row, token.col, format!("expect \":\" or \"|\" here")));
-                    },
-                }
             },
             _ => {},
         };

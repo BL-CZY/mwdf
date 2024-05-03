@@ -1,7 +1,12 @@
+use std::collections::HashMap;
+
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 
+use super::Property;
+
 pub struct Canvas {
+    pub options: HashMap<String, Property>,
     pub background_color: Color,
 }
 

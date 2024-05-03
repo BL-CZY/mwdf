@@ -3,7 +3,7 @@ pub mod token_parser;
 pub mod var_paser;
 pub mod canvas_parser;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::RwLockWriteGuard};
 use crate::view::elements::Element;
 use self::structs::{ InterpreterError, Token, VarListElement };
 
@@ -14,7 +14,7 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     match token_parser::to_token_list(path) {
         Ok(result) => tokens = result,
         Err(e) => {
-            match e {
+            match &e {
                 InterpreterError::InvalidFile => {
                     println!("File Reader: no such file exists in the given path");
                 }
@@ -25,6 +25,10 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
 
                 InterpreterError::EmptyFile => {
                     println!("Token Parser: empty file or no valid tokens");
+                },
+
+                InterpreterError::Syntax(row, col, msg) => {
+                    println!("Token Parser: syntax error at row {} col {}, message: {}", row, col, msg);
                 },
                 
                 _ => {

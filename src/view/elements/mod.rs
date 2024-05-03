@@ -7,3 +7,7 @@ pub enum Element {
     Canvas(Canvas),
     Panel(Panel),
 }
+
+pub enum Property {
+    
+}

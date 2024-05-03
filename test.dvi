@@ -11,24 +11,21 @@
     
     $template: @exp = { $a: @str, $b: @vec } -> {
         <label>
-        *property | @inherit(parent):
-            ^position: @copy(parent) + ($b, $b);
+            --inherit: @parent;
+            --position: @copy(parent) + ($b, $b);
         </label>
     };
 </var>
 <canvas>
     <panel>
+        --position: # this is a vector # (20, 30);
+        --size: (10, 10);
 
-    *property:
-        ^position: # this is a vector # (20, 30);
-        ^size: (10, 10);
-
-    *children:
         <label>
-        *property | @inherit(parent):
-            ^position: @inherit(parent);
-            ^size: (10%, 10%);
-            ^text: "Hello" + $my_font + $content + "World!测试";
+            --inherit: @parent;
+            --position: @inherit(parent);
+            --size: (10%, 10%);
+            --text: "Hello" + $my_font + $content + "World!测试";
         </label>
     
     </panel>
