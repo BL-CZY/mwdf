@@ -3,19 +3,19 @@ pub mod canvas_tree;
 use self::canvas_tree::CanvasNode;
 
 use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
-use super::var_paser;
-use crate::check_single_token;
-use crate::view::elements::{base::{Canvas, Panel}, Element};
+use crate::{check_single_token, view::elements::base::new_panel};
+use crate::view::elements::base::new_canvas;
+use crate::view::elements::Element;
 
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! new_node {
-    ($element: ty, $new: expr, $parent: ident, $stack: ident, $token: ident) => {
+    ($new: expr, $parent: ident, $stack: ident, $token: ident) => {
         //create an element
-        let temp_ele: $element = $new;
+        let temp_ele: Element = $new;
         //create a node
         let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
-            Element::Panel(temp_ele),
+            temp_ele,
             Some(Rc::clone(&$parent)), 
             vec![])));
         //add the children to the current parent
@@ -38,7 +38,7 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
     //initialize the interpret state
     let mut interpret_state: CanvasInterpretState = CanvasInterpretState::None;
     //initialize the result top node
-    let mut result: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(Element::Canvas(Canvas::new()), None, vec![])));
+    let mut result: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(new_canvas(), None, vec![])));
     //initialize the current parent node children list
     //this is a mutable reference to the children vector of the current parent node
     let mut current_parent_node: Rc<RefCell<CanvasNode>> = Rc::clone(&result);
@@ -60,10 +60,11 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
             //check for the tag types
             match token.content.as_str() {
                 "<panel>" => {
-                    new_node!(Panel, Panel::new(), current_parent_node, stack, token);
+                    new_node!(new_panel(), current_parent_node, stack, token);
                 },
                 "<label>" => {
-                    new_node!(Panel, Panel::new(), current_parent_node, stack, token);
+                    //TODO: add labels
+                    new_node!(new_panel(), current_parent_node, stack, token);
                 },
                 _ => {
                     return Err(InterpreterError::Syntax(token.row, token.col, format!("unknown tag")));

@@ -1,33 +1,30 @@
 use std::collections::HashMap;
 
-use sdl2::pixels::Color;
-use sdl2::rect::Point;
+use super::{ element_property_common, Element, ElementType, Property };
+use super::super::structs::{ ColorType, PointType };
 
-use super::Property;
+pub fn new_canvas() -> Element {
+    let mut temp_properties: HashMap<String, Property> = HashMap::from([
+        (format!("--background-color"), Property::BackgroundColor(ColorType::new_empty())),
+    ]);
 
-pub struct Canvas {
-    pub options: HashMap<String, Property>,
-    pub background_color: Color,
-}
+    temp_properties.extend(element_property_common());
 
-impl Canvas {
-    pub fn new() -> Self {
-        Self { background_color: Color::RGB(0, 0, 0) }
+    Element {
+        element_type: ElementType::Canvas,
+        properties: temp_properties,
     }
 }
 
-pub struct Panel {
-    left_up: Point,
-    right_bottom: Point,
-    background_color: Color,
-}
+pub fn new_panel() -> Element {
+    let mut temp_properties: HashMap<String, Property> = HashMap::from([
+        (format!("--background-color"), Property::BackgroundColor(ColorType::new_empty())),
+    ]);
 
-impl Panel {
-    pub fn new() -> Self {
-        Self {
-            left_up: Point::new(0, 0),
-            right_bottom: Point::new(0, 0),
-            background_color: Color::RGB(0, 0, 0),
-        }
+    temp_properties.extend(element_property_common());
+
+    Element {
+        element_type: ElementType::Panel,
+        properties: temp_properties,
     }
 }
