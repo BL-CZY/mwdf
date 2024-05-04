@@ -8,8 +8,11 @@ use std::collections::HashMap;
 pub enum ElementType {
     Canvas,
     Panel,
+    Label,
 }
 
+//* naming convention:
+//* ExampleText -> example-text
 pub enum Property {
     //* transform related
     Width(u32),
@@ -24,6 +27,7 @@ pub enum Property {
     //* text related
     Text(String),
     Font(String),
+    FontColor(ColorType),
     TextAlign(TextAlignType),
 }
 
@@ -35,27 +39,12 @@ pub struct Element {
 pub fn element_property_common() -> HashMap<String, Property> {
     HashMap::from([
         //* transform related
-        (format!("--width"), Property::Width(0)),
-        (format!("--height"), Property::Height(0)),
-        (format!("--position"), Property::Position(PointType::new_empty())),
-        (format!("--pivot"), Property::Pivot(PivotType::TopLeft)),
+        (format!("width"), Property::Width(0)),
+        (format!("height"), Property::Height(0)),
+        (format!("position"), Property::Position(PointType::new_empty())),
+        (format!("pivot"), Property::Pivot(PivotType::TopLeft)),
 
         //* color related
-        (format!("--background-color"), Property::BackgroundColor(ColorType::new_empty())),
+        (format!("background-color"), Property::BackgroundColor(ColorType::new_empty())),
     ])
-}
-
-macro_rules! new_element {
-    ($type: ident, $extra: expr) => {
-        let mut temp_properties: HashMap<String, Property> = HashMap::from([
-            $expr
-        ]);
-    
-        temp_properties.extend(element_property_common());
-    
-        Element {
-            element_type: $type,
-            properties: temp_properties,
-        }
-    };
 }

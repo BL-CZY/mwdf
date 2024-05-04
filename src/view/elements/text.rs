@@ -1,20 +1,20 @@
-use sdl2::pixels::Color;
-use sdl2::rect::Point;
+use std::collections::HashMap;
 
-pub struct Label {
-    pub start: Point,
-    pub content: String,
-    pub text_color: Color,
-    pub font: String,
-}
+use super::{ element_property_common, Element, ElementType, Property };
+use super::super::structs::{ ColorType, TextAlignType };
 
-impl Label {
-    pub fn new() -> Self {
-        Self {
-            start: Point::new(0, 0),
-            content: String::from(""),
-            text_color: Color::RGB(0, 0, 0),
-            font: String::from(""),
-        }
+pub fn new_label() -> Element {
+    let mut temp_properties: HashMap<String, Property> = HashMap::from([
+        (format!("text"), Property::Text(format!("text"))),
+        (format!("font"), Property::Text(format!("sans serif"))),
+        (format!("font-color"), Property::TextColor(ColorType::new_empty())),
+        (format!("text-align"), Property::TextAlign(TextAlignType::Left)),
+    ]);
+
+    temp_properties.extend(element_property_common());
+
+    Element {
+        element_type: ElementType::Label,
+        properties: temp_properties,
     }
 }

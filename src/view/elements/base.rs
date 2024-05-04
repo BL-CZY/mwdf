@@ -1,12 +1,9 @@
 use std::collections::HashMap;
 
 use super::{ element_property_common, Element, ElementType, Property };
-use super::super::structs::{ ColorType, PointType };
 
 pub fn new_canvas() -> Element {
-    let mut temp_properties: HashMap<String, Property> = HashMap::from([
-        (format!("--background-color"), Property::BackgroundColor(ColorType::new_empty())),
-    ]);
+    let mut temp_properties: HashMap<String, Property> = HashMap::from([]);
 
     temp_properties.extend(element_property_common());
 
@@ -17,9 +14,7 @@ pub fn new_canvas() -> Element {
 }
 
 pub fn new_panel() -> Element {
-    let mut temp_properties: HashMap<String, Property> = HashMap::from([
-        (format!("--background-color"), Property::BackgroundColor(ColorType::new_empty())),
-    ]);
+    let mut temp_properties: HashMap<String, Property> = HashMap::from([]);
 
     temp_properties.extend(element_property_common());
 
