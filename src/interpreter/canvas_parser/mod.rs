@@ -2,10 +2,11 @@ pub mod canvas_tree;
 
 use self::canvas_tree::CanvasNode;
 
-use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
+use super::structs::{self, CanvasInterpretState, InterpreterError, LangType, Token};
+use crate::view::elements::text::new_label;
 use crate::{check_single_token, view::elements::base::new_panel};
 use crate::view::elements::base::new_canvas;
-use crate::view::elements::Element;
+use crate::view::elements::{Element, Property};
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -15,7 +16,7 @@ macro_rules! new_node {
         let temp_ele: Element = $new;
         //create a node
         let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
-            temp_ele,
+            $new,
             Some(Rc::clone(&$parent)), 
             vec![])));
         //add the children to the current parent
@@ -29,7 +30,7 @@ macro_rules! new_node {
 
 //this function takes in a piece of the token vector and the current index, and will return a tree representing the nodes
 //the tree will be one canvas
-pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
+pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
     if tokens[0].content.as_str() != "<canvas>" {
         return Err(InterpreterError::Syntax(tokens[0].row, tokens[0].col, format!("expect <canvas> here")));
     }
@@ -46,6 +47,9 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
     stack.push((&tokens[0], Rc::clone(&result)));
     *index += 1;
 
+    //initialize these for properties
+    let mut current_property_name: String = format!("");
+    let mut current_property_value: LangType = LangType::StrType(format!(""));
     //start parsing
     //start from the second element as the first is executed
     for token in tokens[1..].iter() {
@@ -63,8 +67,7 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
                     new_node!(new_panel(), current_parent_node, stack, token);
                 },
                 "<label>" => {
-                    //TODO: add labels
-                    new_node!(new_panel(), current_parent_node, stack, token);
+                    new_node!(new_label(), current_parent_node, stack, token);
                 },
                 _ => {
                     return Err(InterpreterError::Syntax(token.row, token.col, format!("unknown tag")));
@@ -105,16 +108,35 @@ pub fn parse_canvas<'a>(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<
                 match token.content.as_str() {
                     "--" => {
                         //the start of a property
-                        interpret_state = CanvasInterpretState::Property;
+                        interpret_state = CanvasInterpretState::PropertyName;
                     }
                     _ => {
                         return Err(InterpreterError::Syntax(token.row, token.col, format!("expect \"*property\" here")));
                     },
                 };
             },
-            CanvasInterpretState::Property => {
+            CanvasInterpretState::PropertyName => {
+                //get the name
+                current_property_name = String::from(&token.content);
+                //check if the current serving element has this property or not
+                if let None = current_parent_node.borrow_mut().value.properties.get_mut(&current_property_name) {
+                    return Err(InterpreterError::Property(token.row, token.col, format!("property {} is not included in the current serving element", &current_property_name)));
+                } else {
+                    interpret_state = CanvasInterpretState::PropertyColon;
+                }
             },
-            _ => {},
+            CanvasInterpretState::PropertyColon => {
+                check_single_token!(token, interpret_state, ":", CanvasInterpretState::PropertyValue);
+            },
+            CanvasInterpretState::PropertyValue => {
+                //at this point it should be included in the hashmap
+                match current_parent_node.borrow_mut().value.properties.get_mut(&current_property_name).unwrap() {
+                    Property::Width(width) => {
+                        
+                    },
+                    _ => {},
+                }
+            },
         };
     }
     Ok(result)

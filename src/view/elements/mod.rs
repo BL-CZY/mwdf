@@ -18,6 +18,7 @@ pub enum Property {
     Width(u32),
     Height(u32),
     Position(PointType),
+    PositionRelToParent(bool),
     Pivot(PivotType),
 
     //* color related
@@ -32,8 +33,8 @@ pub enum Property {
 }
 
 pub struct Element {
-    element_type: ElementType,
-    properties: HashMap<String, Property>,
+    pub element_type: ElementType,
+    pub properties: HashMap<String, Property>,
 }
 
 pub fn element_property_common() -> HashMap<String, Property> {
@@ -42,6 +43,7 @@ pub fn element_property_common() -> HashMap<String, Property> {
         (format!("width"), Property::Width(0)),
         (format!("height"), Property::Height(0)),
         (format!("position"), Property::Position(PointType::new_empty())),
+        (format!("position-rel-to-parent"), Property::PositionRelToParent(true)),
         (format!("pivot"), Property::Pivot(PivotType::TopLeft)),
 
         //* color related

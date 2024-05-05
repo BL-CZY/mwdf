@@ -1,3 +1,15 @@
+pub enum VecTypeElement {
+    IntElement(i32),
+    FloatElement(f32),
+    PercentElement(u8),
+}
+
+pub enum LangType {
+    StrType(String),
+    FontType(String),
+    VecType(Vec<VecTypeElement>),
+}
+
 pub enum TokenParseState {
     None,
     Tag,
@@ -47,14 +59,15 @@ pub enum VarHashState {
 
 pub enum CanvasInterpretState {
     None,
-    Property,
-    PropertyEntry,
-    PropertyExtra,
+    PropertyName,
+    PropertyColon,
+    PropertyValue,
 }
 
 #[derive(PartialEq)]
 pub enum InterpreterError {
     Syntax(u32, u32, String),
+    Property(u32, u32, String),
     InternalError(u32, u32, String),
     InvalidFile,
     EmptyFile,
