@@ -1,15 +1,3 @@
-pub enum VecTypeElement {
-    IntElement(i32),
-    FloatElement(f32),
-    PercentElement(u8),
-}
-
-pub enum LangType {
-    StrType(String),
-    FontType(String),
-    VecType(Vec<VecTypeElement>),
-}
-
 pub enum TokenParseState {
     None,
     Tag,
@@ -77,6 +65,13 @@ pub enum InterpreterError {
 pub enum VarListElement {
     Token(Token),
     ArgDescriptor(ArgDescriptor),
+}
+
+pub enum NumberParseState {
+    None,
+    FirstDigit,
+    Digit,
+    End,
 }
 
 pub struct Token {

@@ -1,7 +1,7 @@
 pub mod base;
 pub mod text;
 
-use super::structs::{ ColorType, PivotType, PointType, TextAlignType };
+use super::structs::{ ColorType, NumberType, PivotType, PointType, TextAlignType };
 
 use std::collections::HashMap;
 
@@ -15,8 +15,8 @@ pub enum ElementType {
 //* ExampleText -> example-text
 pub enum Property {
     //* transform related
-    Width(u32),
-    Height(u32),
+    Width(NumberType),
+    Height(NumberType),
     Position(PointType),
     PositionRelToParent(bool),
     Pivot(PivotType),
@@ -40,13 +40,13 @@ pub struct Element {
 pub fn element_property_common() -> HashMap<String, Property> {
     HashMap::from([
         //* transform related
-        (format!("width"), Property::Width(0)),
-        (format!("height"), Property::Height(0)),
-        (format!("position"), Property::Position(PointType::new_empty())),
+        (format!("width"), Property::Width(NumberType::Int(0))),
+        (format!("height"), Property::Height(NumberType::Int(0))),
+        (format!("position"), Property::Position(PointType::new())),
         (format!("position-rel-to-parent"), Property::PositionRelToParent(true)),
         (format!("pivot"), Property::Pivot(PivotType::TopLeft)),
 
         //* color related
-        (format!("background-color"), Property::BackgroundColor(ColorType::new_empty())),
+        (format!("background-color"), Property::BackgroundColor(ColorType::new())),
     ])
 }

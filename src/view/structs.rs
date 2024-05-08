@@ -1,3 +1,9 @@
+pub enum NumberType {
+    Int(i32),
+    Float(f32),
+    Percent(f32),
+}
+
 pub struct ColorType {
     pub r: u8,
     pub g: u8,
@@ -6,7 +12,7 @@ pub struct ColorType {
 }
 
 impl ColorType {
-    pub fn new_empty() -> Self {
+    pub fn new() -> Self {
         Self {
             r: 0,
             g: 0,
@@ -14,42 +20,18 @@ impl ColorType {
             a: 0,
         }
     }
-
-    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self { r, g, b, a }
-    }
-
-    pub fn from(color: ColorType) -> Self {
-        Self {
-            r: color.r,
-            g: color.g,
-            b: color.b,
-            a: color.a,
-        }
-    }
 }
 
 pub struct PointType {
-    pub x: u32,
-    pub y: u32,
+    pub x: NumberType,
+    pub y: NumberType,
 }
 
 impl PointType {
-    pub fn new_empty() -> Self {
+    pub fn new() -> Self {
         Self {
-            x: 0,
-            y: 0,
-        }
-    }
-
-    pub fn new(x: u32, y: u32) -> Self {
-        Self { x, y }
-    }
-
-    pub fn from(pt: PointType) -> Self {
-        Self {
-            x: pt.x,
-            y: pt.y,
+            x: NumberType::Int(0),
+            y: NumberType::Int(0),
         }
     }
 }

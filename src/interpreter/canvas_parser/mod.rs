@@ -3,7 +3,7 @@ pub mod property_parser;
 
 use self::canvas_tree::CanvasNode;
 
-use super::structs::{self, CanvasInterpretState, InterpreterError, LangType, Token};
+use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
 use crate::view::elements::text::new_label;
 use crate::{check_single_token, view::elements::base::new_panel};
 use crate::view::elements::base::new_canvas;
@@ -50,7 +50,6 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
 
     //initialize these for properties
     let mut current_property_name: String = format!("");
-    let mut current_property_value: LangType = LangType::StrType(format!(""));
     //initialize the pair for fetching the segment of the tokens vector
     let mut property_value_token_range: (usize, usize) = (0, 0);
     //initialize the current index
@@ -141,7 +140,9 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
                 match token.content.as_str() {
                     ";" => {
                         //pass this to the property parser
-                        property_parser::set_property_value(node, property_name, tokens)
+                        property_parser::set_property_value(Rc::clone(&current_parent_node), 
+                            &current_property_name, 
+                            &tokens[property_value_token_range.0..property_value_token_range.1]);
                     },
 
                     _ => {
