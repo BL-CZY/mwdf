@@ -1,4 +1,5 @@
 pub mod canvas_tree;
+pub mod property_parser;
 
 use self::canvas_tree::CanvasNode;
 
@@ -50,14 +51,13 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
     //initialize these for properties
     let mut current_property_name: String = format!("");
     let mut current_property_value: LangType = LangType::StrType(format!(""));
+    //initialize the pair for fetching the segment of the tokens vector
+    let mut property_value_token_range: (usize, usize) = (0, 0);
+    //initialize the current index
+    let mut current_index: usize = 0;
     //start parsing
     //start from the second element as the first is executed
     for token in tokens[1..].iter() {
-        //if it's the last element, stop
-        if (*index as usize) >= tokens.len() {
-            break;
-        }
-
         //deal with the tags
         if structs::is_open_tag(token) {
             //if it's an open tag, push it to the stack
@@ -127,17 +127,33 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
             },
             CanvasInterpretState::PropertyColon => {
                 check_single_token!(token, interpret_state, ":", CanvasInterpretState::PropertyValue);
+
+                //if this is the end of the tokens vector passed, it's an error
+                if tokens.len() == current_index + 1 {
+                    return Err(InterpreterError::Syntax(token.row, token.col, format!("incomplete property declaration")));
+                }
+
+                //now set the property range
+                property_value_token_range = (current_index + 1, 0);
             },
             CanvasInterpretState::PropertyValue => {
-                //at this point it should be included in the hashmap
-                match current_parent_node.borrow_mut().value.properties.get_mut(&current_property_name).unwrap() {
-                    Property::Width(width) => {
-                        
+                //append the property range until meeting the semicolon
+                match token.content.as_str() {
+                    ";" => {
+                        //pass this to the property parser
+                        property_parser::set_property_value(node, property_name, tokens)
                     },
-                    _ => {},
+
+                    _ => {
+                        //if it's not a semicolon, just append the pair
+                        property_value_token_range = (property_value_token_range.0, current_index);
+                    },
                 }
             },
         };
+
+        //increment the counter
+        current_index += 1;
     }
     Ok(result)
 }
