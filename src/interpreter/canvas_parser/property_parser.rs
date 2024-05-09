@@ -3,11 +3,28 @@ use super::canvas_tree::CanvasNode;
 
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
-fn parse_number(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterError> {
+fn parse_single_number(token: Token) -> Result<NumberType, InterpreterError> {
     let digits: HashSet<char> = HashSet::from(
         ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     );
+    let mut result = NumberType::Pixel(0);
 
+    if token.content.is_empty() {
+        return Err(InterpreterError::Syntax(token.row, token.col, format!("empty number")));
+    }
+
+    //check the last digit
+    match token.content.chars().last().unwrap() {
+        '%' => {},
+        'x' => {},
+        'm' => {},
+        _ => {},
+    }
+    
+    Ok(result)
+}
+
+fn parse_number_list(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterError> {
     //initialize
     let result: Vec<NumberType> = vec![];
     let mut parse_state: NumberParseState = NumberParseState::None;
@@ -28,15 +45,7 @@ fn parse_number(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterError> {
                     },
                 }
             },
-            NumberParseState::FirstDigit => {
-                if token.content.is_empty() || token.content.len() > 1 {
-                    return Err(InterpreterError::Syntax(token.row, token.col, format!("invalid digit")))
-                }
-                //the first digit must be a number
-                if let None = digits.get(&token.content.chars().nth(0).unwrap()) {
-
-                }
-            },
+            NumberParseState::FirstDigit => {},
             NumberParseState::Digit => {},
             NumberParseState::End => {},
         }
@@ -61,7 +70,7 @@ pub fn set_property_value(node: Rc<RefCell<CanvasNode>>, property_name: &String,
     match node.borrow_mut().value.properties.get_mut(property_name).unwrap() {
         Property::Width(val) => {
             //expect a number type
-            parse_number(tokens);
+            parse_number_list(tokens);
         },
 
         _ => {

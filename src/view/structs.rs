@@ -1,6 +1,6 @@
 pub enum NumberType {
-    Int(i32),
-    Float(f32),
+    Pixel(u32),
+    Em(f32),
     Percent(f32),
 }
 
@@ -30,8 +30,8 @@ pub struct PointType {
 impl PointType {
     pub fn new() -> Self {
         Self {
-            x: NumberType::Int(0),
-            y: NumberType::Int(0),
+            x: NumberType::Pixel(0),
+            y: NumberType::Pixel(0),
         }
     }
 }

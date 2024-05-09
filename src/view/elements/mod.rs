@@ -40,8 +40,8 @@ pub struct Element {
 pub fn element_property_common() -> HashMap<String, Property> {
     HashMap::from([
         //* transform related
-        (format!("width"), Property::Width(NumberType::Int(0))),
-        (format!("height"), Property::Height(NumberType::Int(0))),
+        (format!("width"), Property::Width(NumberType::Pixel(0))),
+        (format!("height"), Property::Height(NumberType::Pixel(0))),
         (format!("position"), Property::Position(PointType::new())),
         (format!("position-rel-to-parent"), Property::PositionRelToParent(true)),
         (format!("pivot"), Property::Pivot(PivotType::TopLeft)),
