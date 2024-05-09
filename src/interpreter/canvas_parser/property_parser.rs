@@ -3,6 +3,11 @@ use super::canvas_tree::CanvasNode;
 
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
+fn parse_float(input: &str) -> Result<f32, InterpreterError> {
+    let result: f32 = 0.00;
+    Ok(result)
+}
+
 fn parse_single_number(token: Token) -> Result<NumberType, InterpreterError> {
     let digits: HashSet<char> = HashSet::from(
         ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -15,7 +20,9 @@ fn parse_single_number(token: Token) -> Result<NumberType, InterpreterError> {
 
     //check the last digit
     match token.content.chars().last().unwrap() {
-        '%' => {},
+        '%' => {
+            //it's a percent
+        },
         'x' => {},
         'm' => {},
         _ => {},
