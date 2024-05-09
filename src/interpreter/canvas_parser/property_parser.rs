@@ -1,17 +1,9 @@
 use crate::{interpreter::structs::{InterpreterError, NumberParseState, Token}, view::{elements::Property, structs::NumberType}};
 use super::canvas_tree::CanvasNode;
 
-use std::{cell::RefCell, collections::HashSet, rc::Rc};
+use std::{cell::RefCell, collections::HashSet, num::ParseFloatError, rc::Rc};
 
-fn parse_float(input: &str) -> Result<f32, InterpreterError> {
-    let result: f32 = 0.00;
-    Ok(result)
-}
-
-fn parse_single_number(token: Token) -> Result<NumberType, InterpreterError> {
-    let digits: HashSet<char> = HashSet::from(
-        ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    );
+fn parse_single_number(token: &Token) -> Result<NumberType, InterpreterError> {
     let mut result = NumberType::Pixel(0);
 
     if token.content.is_empty() {
@@ -22,9 +14,49 @@ fn parse_single_number(token: Token) -> Result<NumberType, InterpreterError> {
     match token.content.chars().last().unwrap() {
         '%' => {
             //it's a percent
+            //get rid of the last char
+            let temp_slice = &token.content[..token.content.len() - 1];
+            match temp_slice.parse::<f32>() {
+                Ok(result) => {
+                    NumberType::Percent(result/100.0);
+                },
+                _ => {
+                    return Err(InterpreterError::Syntax(token.row, token.col, format!("failed to parse the value {} into a percent", token.content)));
+                },
+            }
         },
-        'x' => {},
-        'm' => {},
+        'x' => {
+            //if the length is too short or the second last is not p
+            if token.content.len() < 3 || token.content.chars().nth(token.content.len() - 2) != Some('p') {
+                return Err(InterpreterError::Syntax(token.row, token.col, format!("number not recognizable")));
+            }
+
+            let temp_slice = &token.content[..token.content.len() - 1];
+            match temp_slice.parse::<u32>() {
+                Ok(result) => {
+                    NumberType::Pixel(result);
+                },
+                _ => {
+                    return Err(InterpreterError::Syntax(token.row, token.col, format!("failed to parse the value {} into a pixel value", token.content)));
+                },
+            }
+        },
+        'm' => {
+            //if the length is too short or the second last is not e
+            if token.content.len() < 3 || token.content.chars().nth(token.content.len() - 2) != Some('e') {
+                return Err(InterpreterError::Syntax(token.row, token.col, format!("number not recognizable")));
+            }
+
+            let temp_slice = &token.content[..token.content.len() - 1];
+            match temp_slice.parse::<f32>() {
+                Ok(result) => {
+                    NumberType::Percent(result);
+                },
+                _ => {
+                    return Err(InterpreterError::Syntax(token.row, token.col, format!("failed to parse the value {} into an em", token.content)));
+                },
+            }
+        },
         _ => {},
     }
     

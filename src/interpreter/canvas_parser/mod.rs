@@ -140,9 +140,12 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
                 match token.content.as_str() {
                     ";" => {
                         //pass this to the property parser
-                        property_parser::set_property_value(Rc::clone(&current_parent_node), 
+                        match property_parser::set_property_value(Rc::clone(&current_parent_node), 
                             &current_property_name, 
-                            &tokens[property_value_token_range.0..property_value_token_range.1]);
+                            &tokens[property_value_token_range.0..property_value_token_range.1 + 1]) {
+                                Ok(..) => {},
+                                Err(..) => {},
+                            }
                     },
 
                     _ => {

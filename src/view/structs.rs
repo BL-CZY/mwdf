@@ -1,20 +1,7 @@
-//it's just here to avoid precision lost
-pub struct FloatType {
-    pub left: u32,
-    pub right: u32,
-}
-
-impl FloatType {
-    pub fn get_float() -> f64 {
-        //TODO combine the left and right part without precision lost
-        0.00
-    }
-}
-
 pub enum NumberType {
     Pixel(u32),
-    Em(FloatType),
-    Percent(FloatType),
+    Em(f32),
+    Percent(f32),
 }
 
 pub struct ColorType {
