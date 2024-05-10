@@ -69,9 +69,9 @@ pub enum VarListElement {
 
 pub enum NumberParseState {
     None,
-    FirstDigit,
-    Digit,
-    End,
+    Number,
+    Next,
+    Finish,
 }
 
 pub struct Token {

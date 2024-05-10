@@ -1,7 +1,7 @@
 use crate::{interpreter::structs::{InterpreterError, NumberParseState, Token}, view::{elements::Property, structs::NumberType}};
 use super::canvas_tree::CanvasNode;
 
-use std::{cell::RefCell, collections::HashSet, num::ParseFloatError, rc::Rc};
+use std::{cell::RefCell, collections::HashSet, num::ParseFloatError, rc::Rc, result};
 
 fn parse_single_number(token: &Token) -> Result<NumberType, InterpreterError> {
     let mut result = NumberType::Pixel(0);
@@ -65,7 +65,7 @@ fn parse_single_number(token: &Token) -> Result<NumberType, InterpreterError> {
 
 fn parse_number_list(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterError> {
     //initialize
-    let result: Vec<NumberType> = vec![];
+    let mut result: Vec<NumberType> = vec![];
     let mut parse_state: NumberParseState = NumberParseState::None;
 
     //start the loop
@@ -75,7 +75,7 @@ fn parse_number_list(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterErr
                 match token.content.as_str() {
                     "(" => {
                         //marks the start of a number vector
-                        parse_state = NumberParseState::FirstDigit;
+                        parse_state = NumberParseState::Number;
                     },
 
                     _ => {
@@ -84,9 +84,43 @@ fn parse_number_list(tokens: &[Token]) -> Result<Vec<NumberType>, InterpreterErr
                     },
                 }
             },
-            NumberParseState::FirstDigit => {},
-            NumberParseState::Digit => {},
-            NumberParseState::End => {},
+
+            NumberParseState::Number => {
+                match parse_single_number(token) {
+                    Ok(val) => {
+                        //if succeed, push it to result
+                        result.push(val);
+                        parse_state = NumberParseState::Next;
+                    },
+
+                    Err(e) => {
+                        return Err(e);
+                    },
+                }
+            },
+
+            NumberParseState::Next => {
+                match token.content.as_str() {
+                    "," => {
+                        parse_state = NumberParseState::Number;
+                    },
+
+                    ")" => {
+                        //to finish state
+                        parse_state = NumberParseState::Finish;
+                    },
+
+                    _ => {
+                        //error
+                        return Err(InterpreterError::Syntax(token.row, token.col, format!("unexpect \",\" or \")\" here")));
+                    },
+                }
+            },
+
+            NumberParseState::Finish => {
+                //if it runs here, everything is an error
+                return Err(InterpreterError::Syntax(token.row, token.col, format!("more tokens than expected")));
+            }
         }
     }
 
@@ -109,7 +143,23 @@ pub fn set_property_value(node: Rc<RefCell<CanvasNode>>, property_name: &String,
     match node.borrow_mut().value.properties.get_mut(property_name).unwrap() {
         Property::Width(val) => {
             //expect a number type
-            parse_number_list(tokens);
+            let temp_vec: Vec<NumberType>;
+            match parse_number_list(tokens) {
+                Ok(result) => {
+                    temp_vec = result;
+                },
+
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+
+            //cannot be empty
+            if temp_vec.is_empty() {
+                return Err(InterpreterError::Property(tokens[0].row, tokens[0].col, format!("empty vector not expected")));
+            }
+
+            val = *temp_vec[0];
         },
 
         _ => {
