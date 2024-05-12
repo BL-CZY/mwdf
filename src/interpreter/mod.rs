@@ -5,7 +5,7 @@ pub mod var_paser;
 
 use self::structs::{InterpreterError, Token, VarListElement};
 use crate::view::elements::Element;
-use std::{collections::HashMap, sync::RwLockWriteGuard};
+use std::collections::HashMap;
 
 pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     //initialize token lists

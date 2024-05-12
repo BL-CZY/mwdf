@@ -5,7 +5,6 @@ pub enum TokenParseState {
     Str,
     Builtin,
     TwoCharToken,
-    Mark,
     Property,
     Vector,
     Comment,
