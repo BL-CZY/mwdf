@@ -82,7 +82,7 @@ pub struct Token {
 
 impl Token {
     pub fn new(content: String, row: u32, col: u32) -> Self {
-        Self {content, row, col}
+        Self { content, row, col }
     }
 
     pub fn from(token: &Token) -> Self {
@@ -100,9 +100,7 @@ pub struct ArgDescriptor {
 
 impl ArgDescriptor {
     pub fn new() -> Self {
-        Self {
-            arg_num: 0,
-        }
+        Self { arg_num: 0 }
     }
 }
 
@@ -121,7 +119,9 @@ pub fn is_open_tag(token: &Token) -> bool {
 pub fn is_close_tag(token: &Token) -> bool {
     if token.content.chars().count() < 3 {
         false
-    } else if token.content.chars().nth(0).unwrap() == '<' && token.content.chars().nth(1).unwrap() == '/' {
+    } else if token.content.chars().nth(0).unwrap() == '<'
+        && token.content.chars().nth(1).unwrap() == '/'
+    {
         true
     } else {
         false
@@ -131,7 +131,9 @@ pub fn is_close_tag(token: &Token) -> bool {
 pub fn is_closing_tag_to(expected_closing_tag: &Token, opening_tag: &Token) -> bool {
     if !is_open_tag(opening_tag) || !is_close_tag(expected_closing_tag) {
         return false;
-    } else if expected_closing_tag.content.chars().count() != opening_tag.content.chars().count() + 1 {
+    } else if expected_closing_tag.content.chars().count()
+        != opening_tag.content.chars().count() + 1
+    {
         return false;
     } else if &expected_closing_tag.content[3..] == &opening_tag.content[2..] {
         return true;

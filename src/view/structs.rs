@@ -34,6 +34,10 @@ impl PointType {
             y: NumberType::Pixel(0),
         }
     }
+
+    pub fn from(x: NumberType, y: NumberType) -> Self {
+        Self { x, y }
+    }
 }
 
 pub enum PivotType {
@@ -46,7 +50,6 @@ pub enum PivotType {
     LeftCenter,
     RightCenter,
     Center,
-    Custom(u32, u32),
 }
 
 pub enum TextAlignType {

@@ -4,10 +4,10 @@ pub mod property_parser;
 use self::canvas_tree::CanvasNode;
 
 use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
-use crate::view::elements::text::new_label;
-use crate::{check_single_token, view::elements::base::new_panel};
 use crate::view::elements::base::new_canvas;
-use crate::view::elements::{Element, Property};
+use crate::view::elements::text::new_label;
+use crate::view::elements::Element;
+use crate::{check_single_token, view::elements::base::new_panel};
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -18,8 +18,9 @@ macro_rules! new_node {
         //create a node
         let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
             $new,
-            Some(Rc::clone(&$parent)), 
-            vec![])));
+            Some(Rc::clone(&$parent)),
+            vec![],
+        )));
         //add the children to the current parent
         $parent.borrow_mut().children.push(Rc::clone(&temp_node));
         //switch the current parent to the created element
@@ -31,16 +32,24 @@ macro_rules! new_node {
 
 //this function takes in a piece of the token vector and the current index, and will return a tree representing the nodes
 //the tree will be one canvas
-pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
+pub fn parse_canvas(
+    tokens: &[Token],
+    index: &mut u32,
+) -> Result<Rc<RefCell<CanvasNode>>, InterpreterError> {
     if tokens[0].content.as_str() != "<canvas>" {
-        return Err(InterpreterError::Syntax(tokens[0].row, tokens[0].col, format!("expect <canvas> here")));
+        return Err(InterpreterError::Syntax(
+            tokens[0].row,
+            tokens[0].col,
+            format!("expect <canvas> here"),
+        ));
     }
     //initialize the stack
     let mut stack: Vec<(&Token, Rc<RefCell<CanvasNode>>)> = vec![];
     //initialize the interpret state
     let mut interpret_state: CanvasInterpretState = CanvasInterpretState::None;
     //initialize the result top node
-    let mut result: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(new_canvas(), None, vec![])));
+    let mut result: Rc<RefCell<CanvasNode>> =
+        Rc::new(RefCell::new(CanvasNode::new(new_canvas(), None, vec![])));
     //initialize the current parent node children list
     //this is a mutable reference to the children vector of the current parent node
     let mut current_parent_node: Rc<RefCell<CanvasNode>> = Rc::clone(&result);
@@ -64,19 +73,27 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
             match token.content.as_str() {
                 "<panel>" => {
                     new_node!(new_panel(), current_parent_node, stack, token);
-                },
+                }
                 "<label>" => {
                     new_node!(new_label(), current_parent_node, stack, token);
-                },
+                }
                 _ => {
-                    return Err(InterpreterError::Syntax(token.row, token.col, format!("unknown tag")));
-                },
+                    return Err(InterpreterError::Syntax(
+                        token.row,
+                        token.col,
+                        format!("unknown tag"),
+                    ));
+                }
             };
         } else if structs::is_close_tag(token) {
             //if it's a close tag, match it to the last element on the stack
             //if the stack if empty, return an error
             if stack.len() == 0 {
-                return Err(InterpreterError::Syntax(token.row, token.col, format!("extra closing tag")));
+                return Err(InterpreterError::Syntax(
+                    token.row,
+                    token.col,
+                    format!("extra closing tag"),
+                ));
             }
 
             if structs::is_closing_tag_to(token, stack.last().unwrap().0) {
@@ -86,18 +103,34 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
 
                     //if the node doesn't have a parent, there is an internal error
                     if let None = current_parent_node.borrow().parent {
-                        return Err(InterpreterError::InternalError(token.row, token.col, format!("try to trace back to the parent of a node, but failed to find one")))
+                        return Err(InterpreterError::InternalError(
+                            token.row,
+                            token.col,
+                            format!(
+                                "try to trace back to the parent of a node, but failed to find one"
+                            ),
+                        ));
                     }
 
                     //if the node has parent, change the current parent node to the parent
                     let temp = Rc::clone(&current_parent_node.borrow().parent.as_ref().unwrap());
                     current_parent_node = Rc::clone(&temp);
                 } else {
-                    return Err(InterpreterError::InternalError(token.row, token.col, format!("for some reason it tries to pop the element while the stack is empty")))
+                    return Err(InterpreterError::InternalError(
+                        token.row,
+                        token.col,
+                        format!(
+                            "for some reason it tries to pop the element while the stack is empty"
+                        ),
+                    ));
                 }
             } else {
                 //if doesn't match, throw an error
-                return Err(InterpreterError::Syntax(token.row, token.col, format!("mismatched tags")));
+                return Err(InterpreterError::Syntax(
+                    token.row,
+                    token.col,
+                    format!("mismatched tags"),
+                ));
             }
         }
 
@@ -110,50 +143,77 @@ pub fn parse_canvas(tokens: &[Token], index: &mut u32) -> Result<Rc<RefCell<Canv
                         interpret_state = CanvasInterpretState::PropertyName;
                     }
                     _ => {
-                        return Err(InterpreterError::Syntax(token.row, token.col, format!("expect \"*property\" here")));
-                    },
+                        return Err(InterpreterError::Syntax(
+                            token.row,
+                            token.col,
+                            format!("expect \"*property\" here"),
+                        ));
+                    }
                 };
-            },
+            }
             CanvasInterpretState::PropertyName => {
                 //get the name
                 current_property_name = String::from(&token.content);
                 //check if the current serving element has this property or not
-                if let None = current_parent_node.borrow_mut().value.properties.get_mut(&current_property_name) {
-                    return Err(InterpreterError::Property(token.row, token.col, format!("property {} is not included in the current serving element", &current_property_name)));
+                if let None = current_parent_node
+                    .borrow_mut()
+                    .value
+                    .properties
+                    .get_mut(&current_property_name)
+                {
+                    return Err(InterpreterError::Property(
+                        token.row,
+                        token.col,
+                        format!(
+                            "property {} is not included in the current serving element",
+                            &current_property_name
+                        ),
+                    ));
                 } else {
                     interpret_state = CanvasInterpretState::PropertyColon;
                 }
-            },
+            }
             CanvasInterpretState::PropertyColon => {
-                check_single_token!(token, interpret_state, ":", CanvasInterpretState::PropertyValue);
+                check_single_token!(
+                    token,
+                    interpret_state,
+                    ":",
+                    CanvasInterpretState::PropertyValue
+                );
 
                 //if this is the end of the tokens vector passed, it's an error
                 if tokens.len() == current_index + 1 {
-                    return Err(InterpreterError::Syntax(token.row, token.col, format!("incomplete property declaration")));
+                    return Err(InterpreterError::Syntax(
+                        token.row,
+                        token.col,
+                        format!("incomplete property declaration"),
+                    ));
                 }
 
                 //now set the property range
                 property_value_token_range = (current_index + 1, 0);
-            },
+            }
             CanvasInterpretState::PropertyValue => {
                 //append the property range until meeting the semicolon
                 match token.content.as_str() {
                     ";" => {
                         //pass this to the property parser
-                        match property_parser::set_property_value(Rc::clone(&current_parent_node), 
-                            &current_property_name, 
-                            &tokens[property_value_token_range.0..property_value_token_range.1 + 1]) {
-                                Ok(..) => {},
-                                Err(..) => {},
-                            }
-                    },
+                        match property_parser::set_property_value(
+                            Rc::clone(&current_parent_node),
+                            &current_property_name,
+                            &tokens[property_value_token_range.0..property_value_token_range.1 + 1],
+                        ) {
+                            Ok(..) => {}
+                            Err(..) => {}
+                        }
+                    }
 
                     _ => {
                         //if it's not a semicolon, just append the pair
                         property_value_token_range = (property_value_token_range.0, current_index);
-                    },
+                    }
                 }
-            },
+            }
         };
 
         //increment the counter

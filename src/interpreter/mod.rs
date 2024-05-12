@@ -1,11 +1,11 @@
+pub mod canvas_parser;
 pub mod structs;
 pub mod token_parser;
 pub mod var_paser;
-pub mod canvas_parser;
 
-use std::{collections::HashMap, sync::RwLockWriteGuard};
+use self::structs::{InterpreterError, Token, VarListElement};
 use crate::view::elements::Element;
-use self::structs::{ InterpreterError, Token, VarListElement };
+use std::{collections::HashMap, sync::RwLockWriteGuard};
 
 pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     //initialize token lists
@@ -25,18 +25,21 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
 
                 InterpreterError::EmptyFile => {
                     println!("Token Parser: empty file or no valid tokens");
-                },
+                }
 
                 InterpreterError::Syntax(row, col, msg) => {
-                    println!("Token Parser: syntax error at row {} col {}, message: {}", row, col, msg);
-                },
-                
+                    println!(
+                        "Token Parser: syntax error at row {} col {}, message: {}",
+                        row, col, msg
+                    );
+                }
+
                 _ => {
                     println!("unhandled error");
-                },
+                }
             };
             return Err(e);
-        },
+        }
     };
 
     //initialize the result hashmap
@@ -49,20 +52,23 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
         Err(e) => {
             match &e {
                 InterpreterError::Syntax(row, col, msg) => {
-                    println!("Var Parser: syntax error at line {}, character {}, message: {}", row, col, msg);
-                },
+                    println!(
+                        "Var Parser: syntax error at line {}, character {}, message: {}",
+                        row, col, msg
+                    );
+                }
 
                 InterpreterError::InternalError(row, col, msg) => {
                     println!("INTERNAL ERROR at {}, {}: {}", row, col, msg);
-                },
+                }
 
                 _ => {
                     println!("unhandled error");
-                },
+                }
             };
 
             return Err(e);
-        },
+        }
     };
 
     for (.., val) in vars.iter() {
@@ -70,19 +76,19 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
             match i {
                 VarListElement::Token(t) => {
                     print!("{} ", t.content.as_str());
-                },
+                }
 
                 VarListElement::ArgDescriptor(a) => {
                     print!("{} ", a.arg_num);
-                },
+                }
             };
         }
         println!("");
     }
 
     match canvas_parser::parse_canvas(&tokens[index as usize..], &mut index) {
-        _ => {},
+        _ => {}
     };
-    
+
     Ok(vec![])
 }

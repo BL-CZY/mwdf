@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use super::structs::{InterpreterError, TokenParseState, Token};
+use super::structs::{InterpreterError, Token, TokenParseState};
 
 fn read_file(path: &str) -> std::io::Result<Vec<u8>> {
     //read the file into a vector of ASCII characters
@@ -16,11 +16,11 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
     let data: Vec<u8>;
 
     match read_file(path) {
-      Ok(file_data) => data = file_data,
+        Ok(file_data) => data = file_data,
 
-      Err( .. ) => {
+        Err(..) => {
             return Err(InterpreterError::InvalidFile);
-      }
+        }
     }
 
     //initialize the state machine
@@ -40,226 +40,238 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
 
     //start parsing
     for character in char_data.iter() {
-       match parse_state {
-          //if none then proceed until see a "<"
-          TokenParseState::None => {
-              match character {
-                  //if < then it's a tag
-                  '<' => {
-                      parse_state = TokenParseState::Tag;
-                      tokens.push(Token::new(String::from("<"), row, col));
-                  },
+        match parse_state {
+            //if none then proceed until see a "<"
+            TokenParseState::None => {
+                match character {
+                    //if < then it's a tag
+                    '<' => {
+                        parse_state = TokenParseState::Tag;
+                        tokens.push(Token::new(String::from("<"), row, col));
+                    }
 
-                  '$' => {
-                      parse_state = TokenParseState::Var;
-                      //it's going to be abt variables
-                      tokens.push(Token::new(String::from("$"), row, col));
-                      tokens.push(Token::new(String::from(""), row, col));
-                  },
+                    '$' => {
+                        parse_state = TokenParseState::Var;
+                        //it's going to be abt variables
+                        tokens.push(Token::new(String::from("$"), row, col));
+                        tokens.push(Token::new(String::from(""), row, col));
+                    }
 
-                  '\"' | '`' => {
-                      parse_state = TokenParseState::Str;
-                      //abt strings
-                      tokens.push(Token::new(String::from(*character), row, col));
-                      tokens.push(Token::new(String::from(""), row, col));
-                  },
+                    '\"' | '`' => {
+                        parse_state = TokenParseState::Str;
+                        //abt strings
+                        tokens.push(Token::new(String::from(*character), row, col));
+                        tokens.push(Token::new(String::from(""), row, col));
+                    }
 
-                  '@' => {
-                      parse_state = TokenParseState::Builtin;
-                      tokens.push(Token::new(String::from("@"), row, col));
-                  },
+                    '@' => {
+                        parse_state = TokenParseState::Builtin;
+                        tokens.push(Token::new(String::from("@"), row, col));
+                    }
 
-                  //single char tokens
-                  ';' | ':' | '+' | ',' | '|' | '{' | '}' => {
-                      tokens.push(Token::new(String::from(*character), row, col));
-                  },
+                    //single char tokens
+                    ';' | ':' | '+' | ',' | '|' | '{' | '}' => {
+                        tokens.push(Token::new(String::from(*character), row, col));
+                    }
 
-                  //double char tokens
-                  '-' => {
-                      parse_state = TokenParseState::TwoCharToken;
-                  },
+                    //double char tokens
+                    '-' => {
+                        parse_state = TokenParseState::TwoCharToken;
+                    }
 
-                  //vector
-                  '(' => {
-                      parse_state = TokenParseState::Vector;
-                      tokens.push(Token::new(String::from(*character), row, col));
-                      tokens.push(Token::new(String::from(""), row, col));
-                  },
+                    //vector
+                    '(' => {
+                        parse_state = TokenParseState::Vector;
+                        tokens.push(Token::new(String::from(*character), row, col));
+                        tokens.push(Token::new(String::from(""), row, col));
+                    }
 
-                  //comments
-                  '#' => {
-                      parse_state = TokenParseState::Comment;
-                  },
-                  
-                  //if space or next line ignore it
-                  ' ' | '\n' => {  },
-                  
-                  //if otherwise it's an error
-                  _ => {
-                      return Err(InterpreterError::Syntax(row, col, String::from("unknown token start")));
-                  },
-               };
-            },
+                    //comments
+                    '#' => {
+                        parse_state = TokenParseState::Comment;
+                    }
+
+                    //if space or next line ignore it
+                    ' ' | '\n' => {}
+
+                    //if otherwise it's an error
+                    _ => {
+                        return Err(InterpreterError::Syntax(
+                            row,
+                            col,
+                            String::from("unknown token start"),
+                        ));
+                    }
+                };
+            }
             //just getting tag tokens
             TokenParseState::Tag => {
-               match character {
-                  //exit tag mode
-                  '>' => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                      parse_state = TokenParseState::None;
-                  }
+                match character {
+                    //exit tag mode
+                    '>' => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                        parse_state = TokenParseState::None;
+                    }
 
-                  //you can't have a tag in a tag
-                  '<' => {
-                      return Err(InterpreterError::Syntax(row, col, String::from("recursive tag declaration")));
-                  }
+                    //you can't have a tag in a tag
+                    '<' => {
+                        return Err(InterpreterError::Syntax(
+                            row,
+                            col,
+                            String::from("recursive tag declaration"),
+                        ));
+                    }
 
-                  //or whaever just append the tag
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  }
-               };
-            },
+                    //or whaever just append the tag
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::Var => {
-               match character {
-                  //these would mark the end of a variable name
-                  ':' | '=' | '+' => {
-                      tokens.push(Token::new(String::from(*character), row, col));
-                      parse_state = TokenParseState::None;
-                  },
+                match character {
+                    //these would mark the end of a variable name
+                    ':' | '=' | '+' => {
+                        tokens.push(Token::new(String::from(*character), row, col));
+                        parse_state = TokenParseState::None;
+                    }
 
-                  //ignore these
-                  ' ' | '\n' => {  },
+                    //ignore these
+                    ' ' | '\n' => {}
 
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::Str => {
-               match character {
-                  '\"' | '`' => {
-                      parse_state = TokenParseState::None;
-                      tokens.push(Token::new(String::from(*character), row, col));
-                  },
+                match character {
+                    '\"' | '`' => {
+                        parse_state = TokenParseState::None;
+                        tokens.push(Token::new(String::from(*character), row, col));
+                    }
 
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::Builtin => {
-               match character {
-                  ':' | ',' | ';' | '}' | '=' => {
-                      tokens.push(Token::new(String::from(*character), row, col));
-                      parse_state = TokenParseState::None;
-                  },
+                match character {
+                    ':' | ',' | ';' | '}' | '=' => {
+                        tokens.push(Token::new(String::from(*character), row, col));
+                        parse_state = TokenParseState::None;
+                    }
 
-                  '(' => {
-                      parse_state = TokenParseState::Vector;
-                      tokens.push(Token::new(String::from("("), row, col));
-                      tokens.push(Token::new(String::from(""), row, col));
-                  },
+                    '(' => {
+                        parse_state = TokenParseState::Vector;
+                        tokens.push(Token::new(String::from("("), row, col));
+                        tokens.push(Token::new(String::from(""), row, col));
+                    }
 
-                  ' ' | '\n' => {},
+                    ' ' | '\n' => {}
 
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::TwoCharToken => {
-               match character {
-                  '>' => {
-                      parse_state = TokenParseState::None;
-                      tokens.push(Token::new(String::from("->"), row, col));
-                  },
+                match character {
+                    '>' => {
+                        parse_state = TokenParseState::None;
+                        tokens.push(Token::new(String::from("->"), row, col));
+                    }
 
-                  '-' => {
-                      parse_state = TokenParseState::Property;
-                      tokens.push(Token::new(String::from("--"), row, col));
-                      tokens.push(Token::new(String::from(""), row, col));
-                  },
+                    '-' => {
+                        parse_state = TokenParseState::Property;
+                        tokens.push(Token::new(String::from("--"), row, col));
+                        tokens.push(Token::new(String::from(""), row, col));
+                    }
 
-                  _ => {
-                      return Err(InterpreterError::Syntax(row, col, String::from("unknown token end")));
-                  },
-               };
-            },
+                    _ => {
+                        return Err(InterpreterError::Syntax(
+                            row,
+                            col,
+                            String::from("unknown token end"),
+                        ));
+                    }
+                };
+            }
             TokenParseState::Mark => {
-               match character {
-                  ':' | '|' => {
-                      parse_state = TokenParseState::None;
-                      tokens.push(Token::new(String::from(*character), row, col));
-                  },
-                  ' ' | '\n' => {},
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                match character {
+                    ':' | '|' => {
+                        parse_state = TokenParseState::None;
+                        tokens.push(Token::new(String::from(*character), row, col));
+                    }
+                    ' ' | '\n' => {}
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::Property => {
-               match character {
-                  '|' | ':' => {
-                      parse_state = TokenParseState::None;
-                      tokens.push(Token::new(String::from(*character), row, col));
-                  },
-                  _ => {
-                      tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                match character {
+                    '|' | ':' => {
+                        parse_state = TokenParseState::None;
+                        tokens.push(Token::new(String::from(*character), row, col));
+                    }
+                    _ => {
+                        tokens.last_mut().unwrap().content.push(*character);
+                    }
+                };
+            }
             TokenParseState::Vector => {
-               match character {
-                  //new element in a vector
-                  ',' => {
+                match character {
+                    //new element in a vector
+                    ',' => {
                         tokens.push(Token::new(String::from(*character), row, col));
                         tokens.push(Token::new(format!(""), row, col));
-                  },
-                  //another pair of )
-                  ')' => {
+                    }
+                    //another pair of )
+                    ')' => {
                         parse_state = TokenParseState::None;
                         tokens.push(Token::new(String::from(")"), row, col));
-                  },
-                  
-                  ' ' | '\n' => {},
+                    }
 
-                  _ => {
+                    ' ' | '\n' => {}
+
+                    _ => {
                         tokens.last_mut().unwrap().content.push(*character);
-                  },
-               };
-            },
+                    }
+                };
+            }
             TokenParseState::Comment => {
-               match character {
-                  '#' => {
+                match character {
+                    '#' => {
                         parse_state = TokenParseState::None;
-                  },
+                    }
 
-                  _ => {},
-               };
-            },
-      };
-      
-      //keep track of rows and cols
-      match character {
-          '\n' => {
-             col = 0;
-             row += 1;
-          },
-          _ => {
-             col += 1;
-          },
-      };
-   };
+                    _ => {}
+                };
+            }
+        };
 
-   for token in tokens.iter() {
-      print!("{} ", token.content);
-   };
-   println!("");
+        //keep track of rows and cols
+        match character {
+            '\n' => {
+                col = 0;
+                row += 1;
+            }
+            _ => {
+                col += 1;
+            }
+        };
+    }
 
-   if tokens.len() == 0 {
-      return Err(InterpreterError::EmptyFile);
-   }
+    for token in tokens.iter() {
+        print!("{} ", token.content);
+    }
+    println!("");
 
-   Ok(tokens)
+    if tokens.len() == 0 {
+        return Err(InterpreterError::EmptyFile);
+    }
+
+    Ok(tokens)
 }

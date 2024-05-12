@@ -10,8 +10,7 @@ use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl
 fn main() -> Result<(), String> {
     let sdl_context: Sdl = sdl2::init()?;
     let video_system: VideoSubsystem = sdl_context.video()?;
-    let window: Window = video_system.window("test", 800, 600)
-        .build().unwrap();
+    let window: Window = video_system.window("test", 800, 600).build().unwrap();
 
     let mut canvas: Canvas<Window> = window.into_canvas().build().unwrap();
 
@@ -31,9 +30,9 @@ fn main() -> Result<(), String> {
     //     canvas.fill_rect(Rect::new(5, 1, 20, 10)).unwrap();
     //     canvas.present();
     // }
-    
+
     match interpreter::interpret_file("/home/tpl/projects/mwdf/test.dvi") {
-        _ => {},
+        _ => {}
     };
     Ok(())
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{ element_property_common, Element, ElementType, Property };
+use super::{element_property_common, Element, ElementType, Property};
 
 pub fn new_canvas() -> Element {
     let mut temp_properties: HashMap<String, Property> = HashMap::from([]);

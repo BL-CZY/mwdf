@@ -9,7 +9,15 @@ pub struct CanvasNode {
 }
 
 impl CanvasNode {
-    pub fn new(value: Element, parent: Option<Rc<RefCell<CanvasNode>>>, children: Vec<Rc<RefCell<CanvasNode>>>) -> Self {
-        Self { value, parent, children }
+    pub fn new(
+        value: Element,
+        parent: Option<Rc<RefCell<CanvasNode>>>,
+        children: Vec<Rc<RefCell<CanvasNode>>>,
+    ) -> Self {
+        Self {
+            value,
+            parent,
+            children,
+        }
     }
 }
