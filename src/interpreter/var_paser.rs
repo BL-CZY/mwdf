@@ -81,13 +81,6 @@ pub fn parse_var(
                             .push(VarListElement::Token(Token::from(token)));
                         hash_state = VarHashState::VarDefStrEqual;
                     }
-                    "@ft" => {
-                        result
-                            .get_mut(&current_var)
-                            .unwrap()
-                            .push(VarListElement::Token(Token::from(token)));
-                        hash_state = VarHashState::VarDefFontEqual;
-                    }
                     "@vec" => {
                         result
                             .get_mut(&current_var)
@@ -121,27 +114,6 @@ pub fn parse_var(
             VarHashState::VarDefStrContent => {
                 match token.content.as_str() {
                     "\"" => {
-                        //end of string section
-                        hash_state = VarHashState::VarSemiColon;
-                    }
-
-                    _ => {
-                        result
-                            .get_mut(&current_var)
-                            .unwrap()
-                            .push(VarListElement::Token(Token::from(token)));
-                    }
-                };
-            }
-            VarHashState::VarDefFontEqual => {
-                check_single_token!(token, hash_state, "=", VarHashState::VarDefFontQuota);
-            }
-            VarHashState::VarDefFontQuota => {
-                check_single_token!(token, hash_state, "`", VarHashState::VarDefFontContent);
-            }
-            VarHashState::VarDefFontContent => {
-                match token.content.as_str() {
-                    "`" => {
                         //end of string section
                         hash_state = VarHashState::VarSemiColon;
                     }

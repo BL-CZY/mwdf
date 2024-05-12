@@ -57,7 +57,7 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
                         tokens.push(Token::new(String::from(""), row, col));
                     }
 
-                    '\"' | '`' => {
+                    '\"' => {
                         parse_state = TokenParseState::Str;
                         //abt strings
                         tokens.push(Token::new(String::from(*character), row, col));
@@ -146,7 +146,7 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
             }
             TokenParseState::Str => {
                 match character {
-                    '\"' | '`' => {
+                    '\"' => {
                         parse_state = TokenParseState::None;
                         tokens.push(Token::new(String::from(*character), row, col));
                     }

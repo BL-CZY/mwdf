@@ -22,10 +22,6 @@ pub enum VarHashState {
     VarDefStrQuota,
     VarDefStrContent,
 
-    VarDefFontEqual,
-    VarDefFontQuota,
-    VarDefFontContent,
-
     VarDefVecEqual,
     VarDefVecParenth,
     VarDefVecContent,

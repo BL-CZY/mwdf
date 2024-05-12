@@ -28,7 +28,6 @@ pub enum Property {
     //* text related
     Text(String),
     Font(String),
-    FontColor(ColorType),
     TextAlign(TextAlignType),
 }
 

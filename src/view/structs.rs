@@ -2,6 +2,7 @@ pub enum NumberType {
     Pixel(u32),
     Em(f32),
     Percent(f32),
+    Number(u32),
 }
 
 pub struct ColorType {
@@ -19,6 +20,10 @@ impl ColorType {
             b: 0,
             a: 0,
         }
+    }
+
+    pub fn from(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
     }
 }
 

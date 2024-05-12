@@ -77,13 +77,28 @@ fn parse_single_number(token: &Token) -> Result<NumberType, InterpreterError> {
             let temp_slice = &token.content[..token.content.len() - 1];
             match temp_slice.parse::<f32>() {
                 Ok(val) => {
-                    result = NumberType::Percent(val);
+                    result = NumberType::Em(val);
                 }
                 _ => {
                     return Err(InterpreterError::Syntax(
                         token.row,
                         token.col,
                         format!("failed to parse the value {} into an em", token.content),
+                    ));
+                }
+            }
+        }
+        '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+            //this is just a number, parse it
+            match token.content.parse::<u32>() {
+                Ok(val) => {
+                    result = NumberType::Number(val);
+                }
+                _ => {
+                    return Err(InterpreterError::Syntax(
+                        token.row,
+                        token.col,
+                        format!("failed to parse the value {} into a number", token.content),
                     ));
                 }
             }
