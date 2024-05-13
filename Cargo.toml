@@ -9,3 +9,6 @@ edition = "2021"
 version = "0.36"
 default-features = false
 features = ["gfx"]
+
+[dependencies]
+colored = "2.1.0"
