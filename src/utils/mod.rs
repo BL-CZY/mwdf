@@ -47,9 +47,14 @@ pub fn print_text_align(target: &TextAlignType) {
 }
 
 pub fn print_element(element: &Element, depth: u32) {
-    for _ in 0..depth {
-        print!("-");
+    for _ in 0..(depth * 5) {
+        print!(" ");
     }
+
+    print!("├───");
+
+    print!(" ");
+
     print!("element type: ");
     //print the element type
     match element.element_type {
@@ -59,11 +64,12 @@ pub fn print_element(element: &Element, depth: u32) {
     }
 
     for property in &element.properties {
-        for _ in 0..(depth + 1) {
-            print!("-");
+        for _ in 0..(depth * 3 + 5) {
+            print!(" ");
         }
+        print!("│     ");
 
-        print!(" {}: ", property.0);
+        print!("--{}: ", property.0);
 
         match property.1 {
             Property::Width(val) => print_number_type(val),
