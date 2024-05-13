@@ -102,8 +102,16 @@ impl ArgDescriptor {
 pub fn is_open_tag(token: &Token) -> bool {
     if token.content.chars().count() < 2 {
         //if it's too short, false
-        false
-    } else if token.content.chars().nth(0).unwrap() == '<' {
+        return false;
+    }
+
+    //this is a close tag
+    if token.content.chars().nth(1).unwrap() == '/' {
+        return false;
+    }
+
+    if token.content.chars().nth(0).unwrap() == '<' && token.content.chars().last().unwrap() == '>'
+    {
         //if the first element is <, true
         true
     } else {

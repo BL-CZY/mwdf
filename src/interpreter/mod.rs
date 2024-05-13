@@ -4,8 +4,11 @@ pub mod token_parser;
 pub mod var_paser;
 
 use self::structs::{InterpreterError, Token, VarListElement};
+use crate::utils;
 use crate::view::elements::Element;
+
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     //initialize token lists
@@ -87,7 +90,32 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     }
 
     match canvas_parser::parse_canvas(&tokens[index as usize..], &mut index) {
-        _ => {}
+        Ok(result) => {
+            utils::print_canvas_tree(Rc::clone(&result), 0);
+        }
+        Err(e) => match e {
+            InterpreterError::Syntax(r, c, msg) => {
+                println!(
+                    "canvas parser: syntax error at line {} character {}, message: {}",
+                    r, c, msg
+                );
+            }
+
+            InterpreterError::Property(r, c, msg) => {
+                println!(
+                    "canvas parser: syntax error at line {} character {}, message: {}",
+                    r, c, msg
+                );
+            }
+
+            InterpreterError::InternalError(row, col, msg) => {
+                println!("INTERNAL ERROR at {}, {}: {}", row, col, msg);
+            }
+
+            _ => {
+                println!("unhandled error");
+            }
+        },
     };
 
     Ok(vec![])

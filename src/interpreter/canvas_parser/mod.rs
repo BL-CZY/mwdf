@@ -6,15 +6,12 @@ use self::canvas_tree::CanvasNode;
 use super::structs::{self, CanvasInterpretState, InterpreterError, Token};
 use crate::view::elements::base::new_canvas;
 use crate::view::elements::text::new_label;
-use crate::view::elements::Element;
 use crate::{check_single_token, view::elements::base::new_panel};
 
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! new_node {
     ($new: expr, $parent: ident, $stack: ident, $token: ident) => {
-        //create an element
-        let temp_ele: Element = $new;
         //create a node
         let temp_node: Rc<RefCell<CanvasNode>> = Rc::new(RefCell::new(CanvasNode::new(
             $new,
@@ -48,7 +45,7 @@ pub fn parse_canvas(
     //initialize the interpret state
     let mut interpret_state: CanvasInterpretState = CanvasInterpretState::None;
     //initialize the result top node
-    let mut result: Rc<RefCell<CanvasNode>> =
+    let result: Rc<RefCell<CanvasNode>> =
         Rc::new(RefCell::new(CanvasNode::new(new_canvas(), None, vec![])));
     //initialize the current parent node children list
     //this is a mutable reference to the children vector of the current parent node
@@ -66,6 +63,11 @@ pub fn parse_canvas(
     //start parsing
     //start from the second element as the first is executed
     for token in tokens[1..].iter() {
+        //if it's this node, it's the end
+        if token.content.as_str() == "</canvas>" {
+            println!("");
+            break;
+        }
         //deal with the tags
         if structs::is_open_tag(token) {
             //if it's an open tag, push it to the stack
@@ -73,15 +75,17 @@ pub fn parse_canvas(
             match token.content.as_str() {
                 "<panel>" => {
                     new_node!(new_panel(), current_parent_node, stack, token);
+                    continue;
                 }
                 "<label>" => {
                     new_node!(new_label(), current_parent_node, stack, token);
+                    continue;
                 }
                 _ => {
                     return Err(InterpreterError::Syntax(
                         token.row,
                         token.col,
-                        format!("unknown tag"),
+                        format!("{} is an unknown tag", token.content),
                     ));
                 }
             };
@@ -107,7 +111,7 @@ pub fn parse_canvas(
                             token.row,
                             token.col,
                             format!(
-                                "try to trace back to the parent of a node, but failed to find one"
+                                "try to backtrace the parent of the current node, but failed to find one"
                             ),
                         ));
                     }
@@ -146,7 +150,7 @@ pub fn parse_canvas(
                         return Err(InterpreterError::Syntax(
                             token.row,
                             token.col,
-                            format!("expect \"*property\" here"),
+                            format!("expect \"--\" here, found \"{}\"", token.content),
                         ));
                     }
                 };

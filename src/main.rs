@@ -1,18 +1,18 @@
 mod interpreter;
+mod utils;
 mod view;
 
-use interpreter::structs::{InterpreterError, Token};
-use sdl2::gfx::primitives::DrawRenderer;
-use sdl2::libc::RWF_NOWAIT;
-use sdl2::rect::Rect;
-use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl, VideoSubsystem};
+// use sdl2::gfx::primitives::DrawRenderer;
+// use sdl2::libc::RWF_NOWAIT;
+// use sdl2::rect::Rect;
+// use sdl2::{self, event::Event, pixels::Color, render::Canvas, video::Window, Sdl, VideoSubsystem};
 
 fn main() -> Result<(), String> {
-    let sdl_context: Sdl = sdl2::init()?;
-    let video_system: VideoSubsystem = sdl_context.video()?;
-    let window: Window = video_system.window("test", 800, 600).build().unwrap();
+    // let sdl_context: Sdl = sdl2::init()?;
+    // let video_system: VideoSubsystem = sdl_context.video()?;
+    // let window: Window = video_system.window("test", 800, 600).build().unwrap();
 
-    let mut canvas: Canvas<Window> = window.into_canvas().build().unwrap();
+    // let mut canvas: Canvas<Window> = window.into_canvas().build().unwrap();
 
     // let mut event_pump = sdl_context.event_pump().unwrap();
     // 'running: loop {
