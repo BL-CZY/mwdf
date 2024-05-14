@@ -4,7 +4,7 @@ pub mod token_parser;
 pub mod var_paser;
 
 use self::structs::{InterpreterError, Token, VarListElement};
-use crate::utils::{self, print_element};
+use crate::utils;
 use crate::view::elements::Element;
 
 use std::collections::HashMap;
