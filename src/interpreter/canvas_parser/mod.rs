@@ -63,6 +63,9 @@ pub fn parse_canvas(
     //start parsing
     //start from the second element as the first is executed
     for token in tokens[1..].iter() {
+        //increment the counter
+        current_index += 1;
+
         //if it's this node, it's the end
         if token.content.as_str() == "</canvas>" {
             println!("");
@@ -119,6 +122,8 @@ pub fn parse_canvas(
                     //if the node has parent, change the current parent node to the parent
                     let temp = Rc::clone(&current_parent_node.borrow().parent.as_ref().unwrap());
                     current_parent_node = Rc::clone(&temp);
+
+                    continue;
                 } else {
                     return Err(InterpreterError::InternalError(
                         token.row,
@@ -201,14 +206,18 @@ pub fn parse_canvas(
                 //append the property range until meeting the semicolon
                 match token.content.as_str() {
                     ";" => {
+                        interpret_state = CanvasInterpretState::None;
                         //pass this to the property parser
+
                         match property_parser::set_property_value(
                             Rc::clone(&current_parent_node),
                             &current_property_name,
                             &tokens[property_value_token_range.0..property_value_token_range.1 + 1],
                         ) {
                             Ok(..) => {}
-                            Err(..) => {}
+                            Err(e) => {
+                                return Err(e);
+                            }
                         }
                     }
 
@@ -219,9 +228,6 @@ pub fn parse_canvas(
                 }
             }
         };
-
-        //increment the counter
-        current_index += 1;
     }
     Ok(result)
 }

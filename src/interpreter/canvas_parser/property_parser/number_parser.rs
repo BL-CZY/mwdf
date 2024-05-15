@@ -94,7 +94,7 @@ fn parse_single_number(token: &Token) -> Result<NumberType, InterpreterError> {
                 Ok(val) => {
                     result = NumberType::Number(val);
                 }
-                _ => {
+                Err(..) => {
                     return Err(InterpreterError::Syntax(
                         token.row,
                         token.col,

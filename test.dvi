@@ -1,13 +1,6 @@
 <var>
     # this is a comment #
     # data types: #
-    $my_font: @str = "mono";
-    $my_font_2: @str = "sans serif";
-    $content: @str = "yeah";
-    $varvec: @vec = (10, 20, 30);
-    $integer: @vec = (10);
-    $decimal: @vec = (1.23232);
-    $percent: @vec = (30%);
     
     $template: @exp = { $a: @str, $b: @vec } -> {
         <label>
@@ -17,7 +10,7 @@
 </var>
 <canvas>
     <panel>
-        --position: # this is a vector # (20, 30);
+        --position: # this is a vector # (20%, 30%);
         --width: (10);
         --height: (10);
 

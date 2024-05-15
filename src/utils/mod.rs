@@ -10,7 +10,7 @@ pub fn print_number_type(target: &NumberType) {
     match target {
         NumberType::Pixel(val) => print!("{}{}", val.to_string().yellow(), "px".yellow()),
         NumberType::Em(val) => print!("{}{}", val.to_string().yellow(), "em".yellow()),
-        NumberType::Percent(val) => print!("{}{}", val.to_string().yellow(), "%".yellow()),
+        NumberType::Percent(val) => print!("{}", val.to_string().yellow()),
         NumberType::Number(val) => print!("{}", val.to_string().yellow()),
     }
 }
