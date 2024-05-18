@@ -11,33 +11,20 @@ pub enum TokenParseState {
 }
 
 #[derive(PartialEq)]
-pub enum VarHashState {
+pub enum MacroHashState {
     None,
     VarName,
-    VarTypeColon,
-    VarType,
+    VarEqual,
 
-    VarDefStrEqual,
-    VarDefStrQuota,
-    VarDefStrContent,
+    VarArgsStart,
+    VarArgsDollar,
+    VarArgsName,
+    VarArgsNext,
+    VarArgsEnd,
 
-    VarDefVecEqual,
-    VarDefVecParenth,
-    VarDefVecContent,
-
-    VarDefExpEqual,
-    VarDefExpArgsBracket,
-    VarDefExpArgsDollar,
-    VarDefExpArgsName,
-    VarDefExpArgsColon,
-    VarDefExpArgsType,
-    VarDefExpArgsNext,
-
-    VarDefExpArrow,
-    VarDefExpContentBracket,
-    VarDefExpContent,
-
-    VarSemiColon,
+    VarContentStart,
+    VarContent,
+    VarContentEnd,
 }
 
 pub enum CanvasInterpretState {
@@ -57,9 +44,9 @@ pub enum InterpreterError {
     DecodingError,
 }
 
-pub enum VarListElement {
-    Token(Token),
-    ArgDescriptor(ArgDescriptor),
+pub enum MacroListElement<'a> {
+    Token(&'a Token),
+    Arg(&'a str),
 }
 
 pub enum NumberParseState {
@@ -78,24 +65,6 @@ pub struct Token {
 impl Token {
     pub fn new(content: String, row: u32, col: u32) -> Self {
         Self { content, row, col }
-    }
-
-    pub fn from(token: &Token) -> Self {
-        Self {
-            content: String::from(&token.content),
-            row: token.row,
-            col: token.col,
-        }
-    }
-}
-
-pub struct ArgDescriptor {
-    pub arg_num: u32,
-}
-
-impl ArgDescriptor {
-    pub fn new() -> Self {
-        Self { arg_num: 0 }
     }
 }
 

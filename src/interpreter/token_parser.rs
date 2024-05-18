@@ -131,7 +131,7 @@ pub fn to_token_list(path: &str) -> Result<Vec<Token>, InterpreterError> {
             TokenParseState::Var => {
                 match character {
                     //these would mark the end of a variable name
-                    ':' | '=' | '+' => {
+                    ':' | '=' | '+' | ',' | '}' => {
                         tokens.push(Token::new(String::from(*character), row, col));
                         parse_state = TokenParseState::None;
                     }

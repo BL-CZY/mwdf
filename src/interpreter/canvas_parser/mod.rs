@@ -113,9 +113,8 @@ pub fn parse_canvas(
                         return Err(InterpreterError::InternalError(
                             token.row,
                             token.col,
-                            format!(
-                                "try to backtrace the parent of the current node, but failed to find one"
-                            ),
+                            "try to backtrace the parent of the current node, but failed to find one"
+                                .into(),
                         ));
                     }
 
@@ -128,9 +127,8 @@ pub fn parse_canvas(
                     return Err(InterpreterError::InternalError(
                         token.row,
                         token.col,
-                        format!(
-                            "for some reason it tries to pop the element while the stack is empty"
-                        ),
+                        "for some reason it tries to pop the element while the stack is empty"
+                            .into(),
                     ));
                 }
             } else {
@@ -138,7 +136,7 @@ pub fn parse_canvas(
                 return Err(InterpreterError::Syntax(
                     token.row,
                     token.col,
-                    format!("mismatched tags"),
+                    "mismatched tags".into(),
                 ));
             }
         }
@@ -195,7 +193,7 @@ pub fn parse_canvas(
                     return Err(InterpreterError::Syntax(
                         token.row,
                         token.col,
-                        format!("incomplete property declaration"),
+                        "incomplete property declaration".into(),
                     ));
                 }
 

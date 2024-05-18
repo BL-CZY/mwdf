@@ -1,9 +1,9 @@
 pub mod canvas_parser;
+pub mod macro_paser;
 pub mod structs;
 pub mod token_parser;
-pub mod var_paser;
 
-use self::structs::{InterpreterError, Token, VarListElement};
+use self::structs::{InterpreterError, MacroListElement, Token};
 use crate::utils;
 use crate::view::elements::Element;
 
@@ -46,11 +46,11 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     };
 
     //initialize the result hashmap
-    let vars: HashMap<String, Vec<VarListElement>>;
+    let vars: HashMap<&str, Vec<MacroListElement>>;
     //initialize the index
     let mut index: u32 = 0;
 
-    match var_paser::parse_var(&tokens, &mut index) {
+    match macro_paser::parse_macro(&tokens, &mut index) {
         Ok(result) => vars = result,
         Err(e) => {
             match &e {
@@ -77,12 +77,12 @@ pub fn interpret_file(path: &str) -> Result<Vec<Element>, InterpreterError> {
     for (.., val) in vars.iter() {
         for i in val.iter() {
             match i {
-                VarListElement::Token(t) => {
+                MacroListElement::Token(t) => {
                     print!("{} ", t.content.as_str());
                 }
 
-                VarListElement::ArgDescriptor(a) => {
-                    print!("{} ", a.arg_num);
+                MacroListElement::Arg(a) => {
+                    print!("{} ", a);
                 }
             };
         }

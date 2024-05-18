@@ -1,13 +1,14 @@
-<var>
+<macro>
     # this is a comment #
     # data types: #
     
-    $template: @exp = { $a: @str, $b: @vec } -> {
+    $template = { $a, $b } -> {
         <label>
-            --position: ($b, $b);
+            --position: ($a, $b);
         </label>
     };
-</var>
+
+</macro>
 <canvas>
     <panel>
         --position: # this is a vector # (20%, 30%);
